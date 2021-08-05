@@ -1,4 +1,32 @@
 
+# v2.4.20 2021.07.27
+### en
+- application add addServantWithParams support parameter for handle
+- remove message.h opentracking define
+- fix tc_timer memory leak and timer id duplicate bug
+- support grpc and add GrpcDemo and fix tc_grpc compiler
+- 修复 windows 下 socket 设置阻塞异常
+- 修复 refresh-endpoint-interval 配置无效
+- update unittest
+### cn
+- Application 添加 addServantWithParams, 支持Servant构造参数
+- 去掉Message.h opentracking 定义
+- 修复tc_timer内存泄露和timer id可能冲突的问题
+- 支持grpc GrpcDemo, 修复tc_grpc compiler
+- 修复 windows 下 socket 设置阻塞异常
+- 修复 refresh-endpoint-interval 配置无效
+- 更新unittest
+
+# v2.4.19 2021.05.18
+### en
+- fix TARS_OPENTARCKING not report trace bug
+- update mysql-client to support cmake 3.20
+- fix doc README.md 404
+### cn
+- 修复打开TARS_OPENTARCKING宏时，没有上报trace信息的问题
+- update mysql-client to support cmake 3.20
+- fix doc README.md 404
+
 ## v2.4.18 2021.04.13
 ### en
 - fix tc_thread_queue,Optimizing the swarm effect
