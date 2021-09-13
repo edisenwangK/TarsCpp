@@ -16,6 +16,7 @@
 
 #include "util/tc_port.h"
 #include "util/tc_common.h"
+#include "util/tc_logger.h"
 #include <thread>
 #include <string.h>
 
@@ -238,14 +239,13 @@ void TC_Port::setEnv(const string &name, const string &value)
 #endif
 }
 
-std::string TC_Port::exec(const char* cmd)
+string TC_Port::exec(const char *cmd)
 {
 	string err;
-
-	return TC_Port::exec(cmd, err);
+	return exec(cmd, err);
 }
 
-string TC_Port::exec(const char *cmd, std::string &errstr)
+std::string TC_Port::exec(const char* cmd, std::string &err)
 {
 	string fileData;
 #if TARGET_PLATFORM_WINDOWS
@@ -253,9 +253,9 @@ string TC_Port::exec(const char *cmd, std::string &errstr)
 #else
     FILE* fp = popen(cmd, "r");
 #endif
-	if (fp == NULL) {
-		errstr = "popen '" + string(cmd) + "' error.";
-		return fileData;
+	if(fp == NULL) {
+		err = "open '" + string(cmd) + "' error";
+		return "";
 	}
     static size_t buf_len = 2 * 1024 * 1024;
     char *buf = new char[buf_len];
@@ -272,82 +272,151 @@ string TC_Port::exec(const char *cmd, std::string &errstr)
 	return fileData;
 }
 
-unordered_map<int, vector<std::function<void()>>> TC_Port::_callbacks;
-std::mutex   TC_Port::_mutex;
+shared_ptr<TC_Port::SigInfo> TC_Port::_sigInfo = std::make_shared<TC_Port::SigInfo>();
 
-void TC_Port::registerSig(int sig, std::function<void()> callback)
+
+size_t TC_Port::registerSig(int sig, std::function<void()> callback)
 {
-	std::lock_guard<std::mutex> lock(_mutex);
+	std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
 
-	auto it = _callbacks.find(sig);
+	auto it = _sigInfo->_callbacks.find(sig);
 
-	if(it == _callbacks.end())
+	if(it == _sigInfo->_callbacks.end())
 	{
 		//没有注册过, 才注册
 		registerSig(sig);
 	}
 
-	_callbacks[sig].push_back(callback);
+	size_t id = ++_sigInfo->_callbackId;
+
+	_sigInfo->_callbacks[sig][id] = callback;
+
+	return id;
 }
 
-void TC_Port::registerCtrlC(std::function<void()> callback)
+void TC_Port::unregisterSig(int sig, size_t id)
+{
+	//注意_sigInfo是全局静态的, 有可能已经析构了, 需要特殊判断一下!
+	if(_sigInfo && _sigInfo.use_count() > 0)
+	{
+		std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
+		auto it = _sigInfo->_callbacks.find(sig);
+
+		if(it != _sigInfo->_callbacks.end())
+		{
+			it->second.erase(id);
+		}
+	}
+}
+
+size_t TC_Port::registerCtrlC(std::function<void()> callback)
 {
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
-	registerSig(SIGINT, callback);
+	return registerSig(SIGINT, callback);
 #else
-	registerSig(CTRL_C_EVENT, callback);
+	return registerSig(CTRL_C_EVENT, callback);
 #endif
 }
 
-void TC_Port::registerTerm(std::function<void()> callback)
+void TC_Port::unregisterCtrlC(size_t id)
 {
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
-
-	registerSig(SIGTERM, callback);
+	unregisterSig(SIGINT, id);
 #else
-	registerSig(CTRL_SHUTDOWN_EVENT, callback);
+	unregisterSig(CTRL_C_EVENT, id);
 #endif
 }
 
+size_t TC_Port::registerTerm(std::function<void()> callback)
+{
+#if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
+	return registerSig(SIGTERM, callback);
+#else
+	return registerSig(CTRL_SHUTDOWN_EVENT, callback);
+#endif
+}
+
+void TC_Port::unregisterTerm(size_t id)
+{
+#if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
+	unregisterSig(SIGTERM, id);
+#else
+	unregisterSig(CTRL_SHUTDOWN_EVENT, id);
+#endif
+}
 
 void TC_Port::registerSig(int sig)
 {
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
-	std::thread th(signal, sig, TC_Port::sighandler);
-	th.detach();
+	signal(sig, TC_Port::sighandler);
+//    std::thread th(signal, sig, TC_Port::sighandler);
+//    th.detach();
 #else
-	std::thread th([] {SetConsoleCtrlHandler(TC_Port::HandlerRoutine, TRUE); });
-	th.detach();
+	SetConsoleCtrlHandler(TC_Port::HandlerRoutine, TRUE);
+//    std::thread th([] {SetConsoleCtrlHandler(TC_Port::HandlerRoutine, TRUE); });
+//	th.detach();
 #endif
 }
 
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
 void TC_Port::sighandler( int sig_no )
 {
-	std::lock_guard<std::mutex> lock(_mutex);
+	std::thread th([&]()
+				   {
+					   unordered_map<size_t, std::function<void()>> data;
 
-	auto it = TC_Port::_callbacks.find(sig_no);
-	if(it != TC_Port::_callbacks.end())
-	{
-		for (auto f : it->second)
-		{
-			try { f(); } catch (...) {}
-		}
-	}
+					   {
+					   	std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
+
+					   	auto it = TC_Port::_sigInfo->_callbacks.find(sig_no);
+					   	if (it != TC_Port::_sigInfo->_callbacks.end())
+						   {
+							   data = it->second;
+						   }
+					   }
+
+					   for (auto f : data)
+					   {
+						   try
+						   {
+							   f.second();
+						   }
+						   catch (...)
+						   {
+						   }
+					   }
+				   });
+	th.detach();
 }
 #else
 BOOL WINAPI TC_Port::HandlerRoutine(DWORD dwCtrlType)
 {
-	std::lock_guard<std::mutex> lock(_mutex);
+	std::thread th([&]()
+				   {
+					   unordered_map<size_t, std::function<void()>> data;
 
-	auto it = TC_Port::_callbacks.find(dwCtrlType);
-	if(it != TC_Port::_callbacks.end())
-	{
-		for (auto f : it->second)
-		{
-			try { f(); } catch (...) {}
-		}
-	}
+					   {
+					   	std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
+
+						   auto it = _sigInfo->_callbacks.find(dwCtrlType);
+						   if (it != _sigInfo->_callbacks.end())
+						   {
+							   data = it->second;
+						   }
+					   }
+
+					   for (auto f : data)
+					   {
+						   try
+						   {
+							   f.second();
+						   }
+						   catch (...)
+						   {
+						   }
+					   }
+				   });
+	th.detach();
 	return TRUE;
 }
 #endif

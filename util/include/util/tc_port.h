@@ -23,6 +23,8 @@ typedef unsigned short mode_t;
 #endif
 
 #include <stdio.h>
+#include <memory>
+#include <atomic>
 #include <string>
 #include <vector>
 #include <functional>
@@ -37,6 +39,7 @@ namespace tars
 class TC_Port
 {
 public:
+
     /**
      * @brief 在s1的长度n中搜索s2
      * @return 搜索到的指针, 找不到返回NULL
@@ -82,41 +85,58 @@ public:
 
     static void setEnv(const std::string &name, const std::string &value);
 
-    /**
-     * exec command
-     * @param cmd
-     * @return string
-     */
-	static std::string exec(const char* cmd);
+    static std::string exec(const char* cmd);
+	static std::string exec(const char* cmd, std::string &err);
 
 	/**
-	 * exec command
-	 *
-	 * @param cmd
-	 * @param errstr, if error, get error message
-	 * @return string
+	 * 注册ctrl+c回调事件(SIGINT/CTRL_C_EVENT)
+	 * @param callback
+	 * @return size_t, 注册事件的id, 取消注册时需要
 	 */
-    static std::string exec(const char* cmd, std::string &errstr);
-	
-    static void registerCtrlC(std::function<void()> callback);
+	static size_t registerCtrlC(std::function<void()> callback);
 
-	static void registerTerm(std::function<void()> callback);
+	/**
+	 * 取消注册ctrl+c回调事件
+	 * @param callback
+	 * @return
+	 */
+	static void unregisterCtrlC(size_t id);
+
+	/**
+	 * 注册term事件的回调(SIGTERM/CTRL_SHUTDOWN_EVENT)
+	 * @param callback
+	 * @return size_t, 注册事件的id, 取消注册时需要
+	 */
+	static size_t registerTerm(std::function<void()> callback);
+
+	/**
+	 * 取消注册
+	 * @param id
+	 */
+	static void unregisterTerm(size_t id);
 
 protected:
 
-	static void registerSig(int sig, std::function<void()> callback);
-
+	static size_t registerSig(int sig, std::function<void()> callback);
+	static void unregisterSig(int sig, size_t id);
 	static void registerSig(int sig);
 
-    static std::mutex   _mutex;
-
-	static unordered_map<int, vector<std::function<void()>>> _callbacks;
-
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
-    static void sighandler( int sig_no );
+	static void sighandler( int sig_no );
 #else
-    static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
+	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 #endif
+
+	struct SigInfo
+	{
+		std::mutex   _mutex;
+
+		unordered_map<int, unordered_map<size_t, std::function<void()>>> _callbacks;
+
+		std::atomic<size_t> _callbackId{0};
+	};
+
+	static shared_ptr<SigInfo>	_sigInfo;
 };
 
 }

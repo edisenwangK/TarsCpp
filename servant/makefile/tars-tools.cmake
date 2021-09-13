@@ -95,19 +95,20 @@ FILE(WRITE ${TARS_UPLOAD_TARS} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND}  -E ech
 
 ####################################################################
 
-# k8s taf
+# k8s 
 set(TARS_K8S_WEB_HOST "" CACHE STRING "set k8s web host")
 IF (TARS_K8S_WEB_HOST STREQUAL "")
-	set(TARS_K8S_WEB_HOST "http://taf.test.whup.com:8080")
+	set(TARS_K8S_WEB_HOST "http://tars.test.whup.com:8080")
 ENDIF ()
 
 set(TARS_K8S_TOKEN "" CACHE STRING "set k8s web token")
-set(TARS_K8S_BASE_IMAGE "" CACHE STRING "set taf k8s base image")
+set(TARS_K8S_BASE_IMAGE "" CACHE STRING "set tars k8s base image")
 set(TARS_K8S_UPLOAD "${CMAKE_BINARY_DIR}/run-k8s-upload.cmake")
+set(TARS_K8S_UPLOAD_TARS "${CMAKE_BINARY_DIR}/run-k8s-upload-tars.cmake")
 FILE(WRITE ${TARS_K8S_UPLOAD} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E echo upload k8s all)\n")
 FILE(WRITE ${TARS_K8S_UPLOAD_TARS} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND}  -E echo upload k8s tars all)\n")
 
-####################################################################
+##########################################################################
 
 function(gen_tars TARGET)
 
@@ -142,6 +143,67 @@ function(gen_tars TARGET)
 	endif()
 
 endfunction()
+
+#生成带tars文件的可执行程序
+macro(gen_lib APP TARGET)
+
+	include_directories(${PROJECT_SOURCE_DIR})
+
+	FILE(GLOB_RECURSE SRC_FILES  "*.cc" "*.cpp" "*.c")
+
+	add_library(${TARGET} ${SRC_FILES})
+	file(GLOB_RECURSE TARS_INPUT *.tars)
+
+	if(TARS_INPUT)
+		gen_tars(tars-${TARGET})
+		add_dependencies(${TARGET} tars-${TARGET})
+	endif()
+
+	#make release #########################################################################
+	SET(RUN_RELEASE_COMMAND_FILE "${PROJECT_BINARY_DIR}/run-release-${TARGET}.cmake")
+
+	if (TARS_INPUT)
+		if(WIN32)
+			FILE(WRITE ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E make_directory c:/tarsproto/protocol/${APP}/${TARGET})\n")
+		elseif(APPLE)
+			FILE(WRITE ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E make_directory $ENV{HOME}/tarsproto/protocol/${APP}/${TARGET})\n")
+		elseif(UNIX)
+			FILE(WRITE ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E make_directory /home/tarsproto/${APP}/${TARGET})\n")
+		endif()
+
+		foreach(TARS_FILE ${TARS_INPUT})
+			get_filename_component(TARS_NAME ${TARS_FILE} NAME_WE)
+			get_filename_component(TARS_PATH ${TARS_FILE} PATH)
+
+			set(CUR_TARS_GEN ${TARS_PATH}/${TARS_NAME}.h)
+
+			if(WIN32)
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E echo cp -rf ${CUR_TARS_GEN} c:/tarsproto/protocol/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${CUR_TARS_GEN} c:/tarsproto/protocol/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E echo cp -rf ${TARS_FILE} c:/tarsproto/protocol/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${TARS_FILE} c:/tarsproto/protocol/${APP}/${TARGET})\n")
+			elseif(APPLE)
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E echo cp -rf ${CUR_TARS_GEN} $ENV{HOME}/tarsproto/protocol/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${CUR_TARS_GEN} $ENV{HOME}/tarsproto/protocol/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E echo cp -rf ${TARS_FILE} $ENV{HOME}/tarsproto/protocol/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${TARS_FILE} $ENV{HOME}/tarsproto/protocol/${APP}/${TARGET})\n")
+			elseif(UNIX)
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E echo cp -rf ${CUR_TARS_GEN} /home/tarsproto/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${CUR_TARS_GEN} /home/tarsproto/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E echo cp -rf ${TARS_FILE} /home/tarsproto/${APP}/${TARGET})\n")
+				FILE(APPEND ${RUN_RELEASE_COMMAND_FILE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${TARS_FILE} /home/tarsproto/${APP}/${TARGET})\n")
+			endif()
+		endforeach(TARS_FILE ${TARS_INPUT})
+
+		add_custom_target(${TARGET}-release
+			WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+			DEPENDS ${TARGET}
+			COMMAND ${CMAKE_COMMAND} -P ${RUN_RELEASE_COMMAND_FILE}
+			COMMENT "call ${RUN_RELEASE_COMMAND_FILE}")
+        
+		FILE(APPEND ${TARS_RELEASE} "EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -P ${RUN_RELEASE_COMMAND_FILE})\n")
+	endif ()
+endmacro()
 
 #生成带tars文件的可执行程序
 macro(gen_server APP TARGET)
@@ -392,7 +454,7 @@ endif()
 if(NOT TARGET k8s-upload-tars)
 add_custom_target(k8s-upload-tars
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-		COMMAND cmake -P ${TARS_K8S_UPLOAD_JCE})
+		COMMAND cmake -P ${TARS_K8S_UPLOAD_TARS})
 endif()
 
 
