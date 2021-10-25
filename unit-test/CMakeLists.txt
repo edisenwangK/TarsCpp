@@ -1,7 +1,7 @@
 project(unit-test)
 
-include_directories(${CMAKE_SOURCE_DIR}/servant/protocol/framework)
-include_directories(${CMAKE_SOURCE_DIR}/servant/protocol/servant)
+include_directories(${servant_SOURCE_DIR}/protocol/framework)
+include_directories(${servant_SOURCE_DIR}/protocol/servant)
 
 include_directories(${CMAKE_BINARY_DIR}/src/gtest/include)
 link_directories(${CMAKE_BINARY_DIR}/src/gtest/lib)
