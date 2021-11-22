@@ -198,7 +198,6 @@ void Application::waitForShutdown()
 	TC_Port::unregisterTerm(_termId);
 
 	_epollServer = NULL;
-
 }
 
 void Application::waitForReady()
@@ -277,11 +276,10 @@ bool Application::cmdCloseCoreDump(const string& command, const string& params, 
         tlimit.rlim_cur = tlimit.rlim_max;
     }
 
-
     ret = setrlimit(RLIMIT_CORE, &tlimit);
     if (ret != 0)
     {
-        TLOGERROR("error: "<<strerror(errno)<<endl);
+       TLOGERROR("error: "<<strerror(errno)<<endl);
        return false;
     }
 
@@ -730,6 +728,7 @@ void Application::main(const string &config)
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
         TC_Common::ignorePipe();
 #endif
+    	__out__.modFlag(0xFFFF, false);
 
         //解析配置文件
         parseConfig(config);
@@ -889,10 +888,12 @@ void Application::main(const string &config)
     }
     catch (exception &ex)
     {
-	    __out__.error()  << "[main exception]:" << ex.what() << endl;
+	    __out__.error()  << "[Application]:" << ex.what() << endl;
+
+	    terminate();
 
 		NOTIFY_AND_WAIT("exit: " + string(ex.what()));
-		
+
         exit(-1);
     }
 

@@ -214,7 +214,7 @@ ServantProxyThreadData* ServantProxyThreadData::getData()
 
 void ServantProxyThreadData::deconstructor(Communicator *communicator)
 {
-    if(g_immortal)
+    if(g_immortal.use_count() > 0)
     {
         g_immortal->erase(communicator);
     }
@@ -777,6 +777,12 @@ void ServantProxy::invoke(ReqMessage *msg, bool bCoroAsync)
     ServantProxyThreadData *pSptd = ServantProxyThreadData::getData();
     assert(pSptd != NULL);
 
+    //协程调用方式, 启用协程
+    if(bCoroAsync && TC_CoroutineScheduler::scheduler() && !pSptd->_sched)
+    {
+    	pSptd->_sched = TC_CoroutineScheduler::scheduler();
+    }
+
     msg->data = pSptd->move();
 
     // 调用链追踪透传
@@ -909,7 +915,7 @@ void ServantProxy::invoke(ReqMessage *msg, bool bCoroAsync)
 			if(!msg->pMonitor->bMonitorFin)
 			{
 				TLOGERROR("[ServantProxy::invoke communicator terminate]" << endl);
-				return;
+				throw TarsCommunicatorException("communicator terminate");
 			}
         }
         else
@@ -960,7 +966,6 @@ void ServantProxy::invoke(ReqMessage *msg, bool bCoroAsync)
 
         //异常调用
         int ret = msg->response->iRet;
-
 
 		delete msg;
         msg = NULL;

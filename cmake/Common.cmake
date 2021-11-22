@@ -1,6 +1,6 @@
 
 
-set(TARS_VERSION "3.0.1")
+set(TARS_VERSION "3.0.2")
 add_definitions(-DTARS_VERSION="${TARS_VERSION}")
 
 set(CMAKE_VERBOSE_MAKEFILE off)
@@ -84,6 +84,10 @@ ELSEIF (WIN32)
 ELSE ()
     MESSAGE(STATUS "================ ERROR: This platform is unsupported!!! ================")
 ENDIF (UNIX)
+
+IF (WIN32)
+    add_definitions(-DNOMINMAX)
+ENDIF ()
 
 #-------------------------------------------------------------
 set(TARS2CPP "${CMAKE_BINARY_DIR}/bin/tars2cpp")
