@@ -70,11 +70,11 @@ ObjectProxy::~ObjectProxy()
 
 }
 
-void ObjectProxy::initialize()
+void ObjectProxy::initialize(bool rootServant)
 {
     _endpointManger.reset(new EndpointManager(this, _communicatorEpoll->getCommunicator(), _communicatorEpoll->isFirstNetThread()));
 
-    _endpointManger->init(_sObjectProxyName, _invokeSetId);
+    _endpointManger->init(_sObjectProxyName, _invokeSetId, rootServant);
 }
 
 const vector<AdapterProxy*> & ObjectProxy::getAdapters()
@@ -371,6 +371,19 @@ void ObjectProxy::doTimeout()
         reqInfo->response->iRet = TARSINVOKETIMEOUT;
 
         doInvokeException(reqInfo);
+    }
+}
+
+void ObjectProxy::doKeepAlive()
+{
+    const vector<AdapterProxy*> & vAdapterProxy = _endpointManger->getAdapters();
+
+    for(size_t iAdapter=0; iAdapter< vAdapterProxy.size();++iAdapter)
+    {
+        if(vAdapterProxy[iAdapter] != NULL)
+        {
+            vAdapterProxy[iAdapter]->doKeepAlive();
+        }
     }
 }
 

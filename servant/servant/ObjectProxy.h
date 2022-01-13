@@ -58,7 +58,7 @@ public:
     /**
      * initialize
      */
-    void initialize();
+    void initialize(bool rootServant);
 
     /**
      * 加载locator
@@ -99,6 +99,11 @@ public:
      * 检查Obj的队列超时
      */
     void doTimeout();
+
+    /**
+     * 发起tars_ping请求
+     */
+    void doKeepAlive();
 
     /**
      * 获取CommunicatorEpoll*

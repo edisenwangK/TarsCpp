@@ -48,6 +48,7 @@ Communicator::Communicator()
 , _statReport(NULL)
 , _timeoutLogFlag(true)
 
+, _keepAliveInterval(0)
 // #ifdef TARS_OPENTRACKING
 // , _traceManager(NULL)
 // #endif
@@ -63,6 +64,7 @@ Communicator::Communicator(TC_Config& conf, const string& domain/* = CONFIG_ROOT
 : _initialized(false)
 , _terminating(false)
 , _timeoutLogFlag(true)
+, _keepAliveInterval(0)
 // #ifdef TARS_OPENTRACKING
 // , _traceManager(NULL)
 // #endif
@@ -393,6 +395,12 @@ void Communicator::initialize()
     if(_minTimeout < 1)
         _minTimeout = 1;
 
+    _keepAliveInterval = TC_Common::strto<int64_t>(getProperty("keep-alive-interval", "0"))/1000;
+    if (_keepAliveInterval<5 && _keepAliveInterval!=0)
+    {
+        _keepAliveInterval = 5;
+    }
+
     StatFPrx statPrx = NULL;
     if (!statObj.empty())
     {
@@ -569,21 +577,19 @@ int Communicator::reloadProperty(string & sResult)
         "SetDivision=" + sSetDivision + "\r\n" +
         "report-interval=" + TC_Common::tostr(iReportInterval) + "\r\n" +
         "report-timeout=" + TC_Common::tostr(iReportTimeout) + "\r\n";
-//        "sample-rate=" + TC_Common::tostr(iSampleRate) + "\r\n" +
-//        "max-sample-count=" + TC_Common::tostr(iMaxSampleCount) + "\r\n";
 
     return 0;
 }
 
 vector<TC_Endpoint> Communicator::getEndpoint(const string& objName)
 {
-    ServantProxy * pServantProxy = getServantProxy(objName);
+    ServantProxy * pServantProxy = getServantProxy(objName, "", true);
     return pServantProxy->getEndpoint();
 }
 
 vector<TC_Endpoint> Communicator::getEndpoint4All(const string& objName)
 {
-    ServantProxy *pServantProxy = getServantProxy(objName);
+    ServantProxy *pServantProxy = getServantProxy(objName, "", true);
     return pServantProxy->getEndpoint4All();
 }
 
@@ -733,11 +739,11 @@ void Communicator::doStat()
     }
 }
 
-ServantProxy* Communicator::getServantProxy(const string& objectName, const string& setName)
+ServantProxy* Communicator::getServantProxy(const string& objectName, const string& setName, bool rootServant)
 {
     Communicator::initialize();
 
-    return _servantProxyFactory->getServantProxy(objectName, setName);
+    return _servantProxyFactory->getServantProxy(objectName, setName, rootServant);
 }
 
 StatReport* Communicator::getStatReport()

@@ -12,7 +12,6 @@ TEST_F(HelloTest, registryQuery)
 
 	TC_Config conf = CLIENT_CONFIG();
 
-	// conf.parseString(CLIENT_CONFIG);
 	c->setProperty(conf);
 
 	TC_Config fconf = FRAMEWORK_CONFIG();
@@ -37,7 +36,6 @@ TEST_F(HelloTest, registryQuery)
 	}
 
 	{
-		LOG_CONSOLE_DEBUG << "add TestApp.RpcServer.HelloObj 9992" << endl;
 		CDbHandle::addActiveEndPoint("TestApp.RpcServer.HelloObj", 9992, 1);
 
 		TC_Common::sleep(6);
@@ -57,7 +55,6 @@ TEST_F(HelloTest, registryQuery)
 	}
 
 	{
-		LOG_CONSOLE_DEBUG << "add TestApp.RpcServer.HelloObj 9993" << endl;
 		CDbHandle::addActiveEndPoint("TestApp.RpcServer.HelloObj", 9993, 1);
 
 		TC_Common::sleep(6);
@@ -194,6 +191,22 @@ TEST_F(HelloTest, registryRpc)
 	stopServer(fs);
 }
 
+
+//一致hash测试
+TEST_F(HelloTest, registryRpcConHashInvoke)
+{
+	START_FRAMEWORK_SERVER_1_2
+        CDbHandle::addInactiveEndPoint("TestApp.RpcServer.HelloObj", 9989, 1);
+	CDbHandle::addInactiveEndPoint("TestApp.RpcServer.HelloObj", 9992, 1);
+
+	shared_ptr<Communicator> c = getCommunicator();
+
+	rpcConHashFromRegistry(c.get());
+
+	stopServer(rpc1Server);
+	stopServer(rpc2Server);
+        STOP_FRAMEWORK_SERVER;
+}
 
 TEST_F(HelloTest, registryRpcUpdateList)
 {
@@ -453,4 +466,51 @@ TEST_F(HelloTest, registryHttpRpcCheckUpdateList)
 
 	cor1.detach();
 	STOP_FRAMEWORK_SERVER
+}
+
+TEST_F(HelloTest, registryRpcHashTagInvoke)
+{
+	START_FRAMEWORK_SERVER_1_2
+	CDbHandle::addInactiveEndPoint("TestApp.RpcServer.HelloObj", 9989, 1);
+	CDbHandle::addInactiveEndPoint("TestApp.RpcServer.HelloObj", 9992, 1);
+
+	shared_ptr<Communicator> c = getCommunicator();
+
+	string obj = "TestApp.RpcServer.HelloObj#9999";
+
+	HelloPrx prx = c->stringToProxy<HelloPrx>(obj);
+
+	string out;
+
+	int co = prx->testHello(0, _buffer, out);
+
+	ASSERT_TRUE(co == 0);
+
+	stopServer(rpc1Server);
+	stopServer(rpc2Server);
+	STOP_FRAMEWORK_SERVER;
+}
+
+
+TEST_F(HelloTest, registryRpcMultiHashTagInvoke)
+{
+	START_FRAMEWORK_SERVER_1_2
+	CDbHandle::addInactiveEndPoint("TestApp.RpcServer.HelloObj", 9989, 1);
+	CDbHandle::addInactiveEndPoint("TestApp.RpcServer.HelloObj", 9992, 1);
+
+	shared_ptr<Communicator> c = getCommunicator();
+
+	string obj = "TestApp.RpcServer.HelloObj";
+
+	HelloPrx prx = c->stringToProxy<HelloPrx>(obj);
+
+	string out;
+
+	int co = prx->testHello(0, _buffer, out);
+
+	ASSERT_TRUE(co == 0);
+
+	stopServer(rpc1Server);
+	stopServer(rpc2Server);
+	STOP_FRAMEWORK_SERVER;
 }

@@ -306,6 +306,22 @@ public:
             return false;
         }
 
+        bool open(const string& k)
+        {
+            if (!k.empty())
+            {
+                traceID = k;
+                parentSpanID = "";
+                spanID = "";
+                auto flags = initType(traceID);
+                traceType = std::get<0>(flags);
+                paramMaxLen = std::get<1>(flags);
+                return true;
+            }
+            
+            return false;
+        }
+
         static std::tuple<int, unsigned int> initType(const string& tid)
         {
             int type = 0;
@@ -353,6 +369,10 @@ public:
         void newSpan()
         {
             spanID = TC_UUIDGenerator::getInstance()->genID();
+            if (parentSpanID.empty())
+            {
+                parentSpanID = spanID;
+            }
         }
 
         string getKey(E_SpanType es) const
@@ -403,7 +423,7 @@ public:
         }
     };
 
-    bool           _traceCall;     //标识当前线程是否需要调用链追踪
+    bool           _traceCall = false;     //标识当前线程是否需要调用链追踪，默认不打开
     TraceContext _traceContext;    //调用链追踪信息
 
     string getTraceKey(TraceContext::E_SpanType es) const
@@ -430,6 +450,27 @@ public:
     {
         return _traceContext.needParam(es, _traceContext.traceType, len, _traceContext.paramMaxLen);
     }
+
+    /* 业务主动打开调用链
+    *  @param traceFlag: 调用链日志输出参数控制，取值范围0-15， 0 不用打参数， 其他情况按位做控制开关，从低位到高位分别控制CS、CR、SR、SS，为1则输出对应参数
+    *  @param maxLen: 参数输出最大长度， 不传或者默认0， 则按服务模板默认取值
+    */
+    bool openTrace(int traceFlag = 0, unsigned int maxLen = 0)
+    {
+        string traceID = TC_UUIDGenerator::getInstance()->genID();
+        stringstream ss;
+        if (maxLen > 0)
+        {
+            ss << std::hex << traceFlag << "." << maxLen << "-" << traceID;
+        }
+        else
+        {
+            ss << std::hex << traceFlag << "-" << traceID;
+        }
+        _traceCall = _traceContext.open(ss.str()); 
+        return _traceCall;
+    }
+
     static int needTraceParam(TraceContext::E_SpanType es, const string& k, size_t len)
     {
         auto flags = TraceContext::initType(k);
@@ -452,7 +493,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////调用链追踪 end/////
 
 };
-
 
 //////////////////////////////////////////////////////////////////////////
 // 协程并行请求的基类
@@ -973,6 +1013,12 @@ public:
     virtual ServantProxy* tars_consistent_hash(int64_t key);
 
 
+    /**
+     * 打开调用链
+     * @param traceParams： 是否输出接口调用参数，默认false， 如果设置为true时 接口调用参数会转为json输出会影响性能
+     * @return ServantProxy*
+     */
+    virtual ServantProxy* tars_open_trace(bool traceParams = false);
 
     /**
      * 清除当前的Hash数据
@@ -1131,7 +1177,7 @@ protected:
 	/**
 	 *
 	 */
-    void tars_initialize();
+	void tars_initialize(bool rootServant);
 
     /**
      *
