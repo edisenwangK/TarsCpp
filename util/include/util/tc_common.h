@@ -363,6 +363,11 @@ public:
     * @return string 转换后的时间字符串
     */
     static string now2msstr();
+
+    /**
+     * @brief 毫秒时间转字符串描述
+     * @return string 转换后的时间字符串
+     */
     static string ms2str(int64_t ms);
     /**
     * @brief  时间转换成GMT字符串，GMT格式:Fri, 12 Jan 2001 18:18:18 GMT
@@ -1049,20 +1054,11 @@ namespace p
         }
     };
 
+    //for enum
     template<typename D>
     struct strto2
     {
-    	D operator()(const string &sStr, typename std::enable_if<!std::is_enum<D>::value, void ***>::type dummy = 0)
-        {
-            istringstream sBuffer(sStr);
-            D t;
-
-            sBuffer >> t;
-
-            return t;
-        }
-
-        D operator()(const string &sStr, typename std::enable_if<std::is_enum<D>::value, void ***>::type dummy = 0)
+        D operator()(const string &sStr)
         {
     		istringstream sBuffer(sStr);
     		int i;
@@ -1070,15 +1066,32 @@ namespace p
 
     		return (D)i;
         }
+
     };
 
-    template<>
-    struct strto2<string>
+    //for class
+    template<typename D>
+    struct strto3
     {
-        string operator()(const string &sStr)
-        {
-            return sStr;
-        }
+    	D operator()(const string &sStr)
+    	{
+    		istringstream sBuffer(sStr);
+    		D t;
+
+    		sBuffer >> t;
+
+    		return t;
+    	}
+    };
+
+	//for string
+    template<>
+    struct strto3<string>
+    {
+    	const string &operator()(const string &sStr)
+    	{
+    		return sStr;
+    	}
     };
 
 }
@@ -1086,7 +1099,9 @@ namespace p
 template<typename T>
 T TC_Common::strto(const string &sStr)
 {
-    using strto_type = typename std::conditional<std::is_arithmetic<T>::value, p::strto1<T>, p::strto2<T>>::type;
+	using strto_enum_type = typename std::conditional<std::is_enum<T>::value, p::strto2<T>, p::strto3<T>>::type;
+
+	using strto_type = typename std::conditional<std::is_arithmetic<T>::value, p::strto1<T>, strto_enum_type>::type;
 
     return strto_type()(sStr);
 }

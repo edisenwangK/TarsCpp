@@ -18,6 +18,7 @@
 #define TC_CPP_TRANSCEIVER_H
 
 #include <list>
+#include "util/tc_platform.h"
 #include "util/tc_network_buffer.h"
 #include "util/tc_clientsocket.h"
 #include "util/tc_epoller.h"
@@ -110,7 +111,8 @@ public:
         CR_ACTIVE           = 9,    //主动调用close触发
         CR_DECONSTRUCTOR    = 10,   //析构
 	    CR_SSL_HANDSHAKE    = 11,   //ssl handshake错误
-    };
+		CR_PEER_CLOSE     	= 12,   //对端主动关闭连接
+	};
 
     /**
      * 鉴权状态
@@ -151,12 +153,17 @@ public:
 	using onparser_callback = std::function<TC_NetWorkBuffer::PACKET_TYPE(TC_NetWorkBuffer&, TC_Transceiver*)> ;
 	//完整解析完一个包之后的回调
 	using oncompletepackage_callback = std::function<void(TC_Transceiver*)> ;
+    //完整一次网络解析之后回调(一般有多次解析onparser_callback 以及 oncompletepackage_callback 之后回调, 通常在业务层可以在这个函数中可以把解析的数据一次性写入到队列中)
+    using oncompletenetwork_callback = std::function<void(TC_Transceiver*)> ;
 	//cient侧: 发送鉴权包的回调, 业务层在回调里面组织鉴权包
 	using onclientsendauth_callback = std::function<shared_ptr<TC_NetWorkBuffer::Buffer>(TC_Transceiver*)> ;
     //client侧: 收到鉴权包的的回调, 业务层解包(注意返回PACKET_FULL, 表示鉴权成功)
 	using onclientverifyauth_callback = std::function<TC_NetWorkBuffer::PACKET_TYPE(TC_NetWorkBuffer &, TC_Transceiver*)> ;
     //server侧: 验证鉴权包并返回验证包的回调
 	using onserververifyauth_callback = std::function<pair<TC_NetWorkBuffer::PACKET_TYPE, shared_ptr<TC_NetWorkBuffer::Buffer>>(TC_NetWorkBuffer &, TC_Transceiver*)> ;
+
+    //网络层单次时间收发包最长时间(毫秒), 为了避免网络层一直在收包, 没机会发送包, 默认就1ms, 加速范文
+    static uint64_t LONG_NETWORK_TRANS_TIME;
 
     /**
      * 构造函数
@@ -176,13 +183,14 @@ public:
      * 初始化客户端的连接
      * 句柄是connect时创建的
      */
-    void initializeClient(const oncreate_callback &oncreate, 
-            const onclose_callback &onclose, 
-            const onconnect_callback &onconnect, 
-            const onrequest_callback &onrequest, 
-            const onparser_callback &onparser, 
-            const onopenssl_callback &onopenssl,
-            const oncompletepackage_callback &onfinish = oncompletepackage_callback());
+    void initializeClient(const oncreate_callback &oncreate,
+                          const onclose_callback &onclose,
+                          const onconnect_callback &onconnect,
+                          const onrequest_callback &onrequest,
+                          const onparser_callback &onparser,
+                          const onopenssl_callback &onopenssl,
+                          const oncompletepackage_callback &onfinish = oncompletepackage_callback(),
+                          const oncompletenetwork_callback &onfinishAll = oncompletenetwork_callback());
 
     /**
      *
@@ -193,7 +201,8 @@ public:
             const onrequest_callback &onrequest, 
             const onparser_callback &onparser, 
             const onopenssl_callback &onopenssl,
-            const oncompletepackage_callback &onfinish = oncompletepackage_callback());
+            const oncompletepackage_callback &onfinish = oncompletepackage_callback(),
+            const oncompletenetwork_callback &onfinishAll = oncompletenetwork_callback());
 
     /**
      * 设置绑定地址(对客户端有效, 服务端本身就是绑定的)
@@ -308,9 +317,9 @@ public:
 
     /*
      * 接受网络请求
-     * @return throw TC_Transceiver_Exception
+     * @return bool false: 对端关闭连接, true: 正常, throw TC_Transceiver_Exception
      */
-    virtual void doResponse() = 0;
+    virtual bool doResponse() = 0;
 
     /*
      * 获取文件描述符
@@ -349,6 +358,12 @@ public:
 	 */
 	inline const TC_Endpoint &getConnectEndpoint() const { return _proxyInfo? _proxyInfo->getEndpoint() : _ep; }
 
+	/**
+	 * 获取连接地址
+	 * @return
+	 */
+	inline TC_Endpoint &getConnectEndpoint() { return _proxyInfo? _proxyInfo->getEndpoint() : _ep; }
+
     /**
      * 端口描述
      */ 
@@ -358,9 +373,25 @@ public:
 	 * @brief is ipv6 socket or not
 	 * @return true if is ipv6
 	 */
-	inline bool isConnectIPv6() const  { return getConnectEndpoint().isIPv6(); }
+	inline bool isConnectIPv6() const  { return !isUnixLocal() && getConnectEndpoint().isIPv6(); }
 
-    /**
+#if !TARGET_PLATFORM_WINDOWS
+
+	/**
+	 * is unix local
+	 * @return
+	 */
+	inline bool isUnixLocal() const  { return getConnectEndpoint().isUnixLocal(); }
+#else
+
+	/**
+	 * is unix local
+	 * @return
+	 */
+	inline bool isUnixLocal() const  { return false; }
+
+#endif
+	/**
      * 设置连接超时时间(tcp下才有效)
      */
     void setConnTimeout(int connTimeout) { _connTimeout = connTimeout; }
@@ -605,8 +636,10 @@ protected:
 
 	oncompletepackage_callback      _onCompletePackageCallback;
 
+    oncompletenetwork_callback      _onCompleteNetworkCallback;
+
     onclientsendauth_callback       _onClientSendAuthCallback;
-    
+
     onclientverifyauth_callback     _onClientVerifyAuthCallback;
 
     onserververifyauth_callback     _onServerVerifyAuthCallback;
@@ -649,7 +682,7 @@ public:
      * 处理返回，判断Recv BufferCache是否有完整的包
      * @return throw
      */
-	virtual void doResponse();
+	virtual bool doResponse();
 };
 
 
@@ -671,7 +704,7 @@ public:
      * 处理返回
      * @return throw 
      */
-	virtual void doResponse();
+	virtual bool doResponse();
 };
 
 //////////////////////////////////////////////////////////
@@ -714,7 +747,7 @@ public:
      * 处理返回，判断Recv BufferCache是否有完整的包
      * @return throw
      */
-	virtual void doResponse();
+	virtual bool doResponse();
 
 protected:
 };

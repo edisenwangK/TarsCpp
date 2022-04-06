@@ -698,8 +698,9 @@ void Application::main(int argc, char *argv[])
 
 void Application::main(const TC_Option &option)
 {
-	//直接输出编译的TARS版本
-	if(option.hasParam("version"))
+    __out__.modFlag(0xfffff, false);
+    //直接输出编译的TAF版本
+    if (option.hasParam("version"))
 	{
 		__out__.debug() << "TARS:" << TARS_VERSION << endl;
 		exit(0);
@@ -716,6 +717,9 @@ void Application::main(const TC_Option &option)
 	}
 
 	string config = TC_File::load2str(ServerConfig::ConfigFile);
+
+	__out__.debug() << "config:" << ServerConfig::ConfigFile << endl;
+	__out__.debug() << "config:" << config << endl;
 
 	main(config);
 }

@@ -72,6 +72,18 @@ public:
     virtual ~TC_TimerBase();
 
     /**
+     * 事件总个数
+     * @return
+     */
+    size_t count();
+
+    /**
+     * 重复事件个数
+     * @return
+     */
+    size_t repeatCount();
+
+    /**
      * @brief 指定fireMillseconds时间执行
      * @param fireMillseconds, 触发时间(毫秒)
      * @return 返回事件Id
@@ -145,7 +157,7 @@ public:
 
     /**
      * 下一次定时器的时间
-     */ 
+     */
     int64_t nextTimer() const { return _nextTimer; }
 
     /**
@@ -179,9 +191,20 @@ protected:
 		//单次任务
 		if (repeatTime == 0 && !fPtr->_cron.isset)
 		{
-            fPtr->_func = [task]() {
+			weak_ptr<Func> wPtr = fPtr;
+
+            fPtr->_func = [task, this, wPtr]() {
                 (*task)();
                 task->reset();
+
+				shared_ptr<Func> p = wPtr.lock();
+
+				if(p)
+				{
+					std::unique_lock<std::mutex> lock(_mutex);
+					_tmpEvent.erase(p->_uniqueId);
+				}
+
             };
 		}
 		else
@@ -195,6 +218,11 @@ protected:
                 shared_ptr<Func> p = wPtr.lock();
                 if(p)
 				{
+					{
+						std::unique_lock<std::mutex> lock(_mutex);
+						_tmpEvent.erase(p->_uniqueId);
+					}
+
 					if (this->exist(p->_uniqueId, true))
 					{
 						if (p->_cron.isset)
@@ -208,8 +236,6 @@ protected:
 							p->_fireMillseconds = TC_TimeProvider::getInstance()->getNowMs() + repeatTime;
 							this->post(p);
 						}
-
-						_tmpEvent.erase(p->_uniqueId);
 					}
 				}
             };
@@ -261,9 +287,9 @@ protected:
 
     MAP_EVENT   _mapEvent;      //id, 事件
 
-    MAP_TIMER   _mapTimer;      //时间, 事件
-
 	MAP_EVENT   _tmpEvent;      //id, 事件
+
+    MAP_TIMER   _mapTimer;      //时间, 事件
 
 	atomic_uint _increaseId = {0};
 	

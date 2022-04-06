@@ -186,7 +186,7 @@ TC_NetWorkBuffer::PACKET_TYPE AdapterProxy::onParserCallback(TC_NetWorkBuffer& b
     }
     catch(exception &ex)
     {
-		TLOGERROR("[AdapterProxy::onParserCallback parser error:" << ex.what() << "," << _objectProxy->name() << ", " << _trans->getConnectionString() << "]" << endl);
+		TLOG_ERROR(ex.what() << ", obj: " << _objectProxy->name() << ", desc:" << _trans->getConnectionString()<< endl);
     }
 
     return TC_NetWorkBuffer::PACKET_ERR;
@@ -411,6 +411,8 @@ int AdapterProxy::invoke_connection_parallel(ReqMessage * msg)
 		}
 		else if(ret == TC_Transceiver::eRetError)
 		{
+			TLOGTARS("[AdapterProxy::invoke_connection_parallel send request failed,queue size:" << _timeoutQueue->size() << ",id: " << msg->request.iRequestId << "," << _objectProxy->name() << ", " << _trans->getConnectionString() << "]" << endl);
+
 			//发送出错了
 			msg->eStatus = ReqMessage::REQ_EXC;
 

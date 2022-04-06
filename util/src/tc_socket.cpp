@@ -14,7 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 #include "util/tc_platform.h"
-
+#include "util/tc_clientsocket.h"
 #if TARGET_PLATFORM_LINUX||TARGET_PLATFORM_IOS
 #include <unistd.h>
 #include <fcntl.h>
@@ -371,6 +371,32 @@ TC_Socket::addr_type TC_Socket::createSockAddr(const char *str)
     return addr;
 }
 
+TC_Socket::addr_type TC_Socket::createSockAddr(const TC_Endpoint &ep)
+{
+	TC_Socket::addr_type addr;
+#if !TARGET_PLATFORM_WINDOWS
+	if(ep.isUnixLocal())
+	{
+		addr.first.reset((sockaddr *) new sockaddr_un());
+		addr.second = sizeof(struct sockaddr_un);
+	}
+	else 
+#endif
+
+    if (TC_Socket::addressIsIPv6(ep.getHost()))
+	{
+		addr.first.reset( (sockaddr *)new sockaddr_in6());
+		addr.second = sizeof(struct sockaddr_in6);
+	}
+	else
+	{
+		addr.first.reset((sockaddr *) new sockaddr_in());
+		addr.second = sizeof(struct sockaddr_in);
+	}
+
+	return addr;
+}
+
 void TC_Socket::parseAddrWithPort(const string& host, int port, struct sockaddr_in& addr)
 {
 	memset(&addr, 0, sizeof(struct sockaddr_in));
@@ -385,6 +411,16 @@ void TC_Socket::parseAddrWithPort(const string& host, int port, struct sockaddr_
     }
 }
 
+#if !TARGET_PLATFORM_WINDOWS
+
+void TC_Socket::parseUnixLocalAddr(const char* sPathName, struct sockaddr_un& addr)
+{
+	memset(&addr, 0x00, sizeof(addr));
+	addr.sun_family = AF_LOCAL;
+	strncpy(addr.sun_path, sPathName, sizeof(addr.sun_path));
+}
+
+#endif
 
 void TC_Socket::parseAddrWithPort(const string& host, int port, struct sockaddr_in6& addr)
 {
@@ -424,14 +460,13 @@ void TC_Socket::bind(const string &sServerAddr, int port)
     {
         bind(bindAddr, len);
     }
-    catch(const std::exception& e)
+    catch(TC_Socket_Exception & e)
     {
         std::cerr << e.what() << ", " << sServerAddr << ":" << port << endl;
         throw e;
     }
     
 }
-
 
 void TC_Socket::bind(const struct sockaddr *pstBindAddr, SOCKET_LEN_TYPE iAddrLen)
 {
@@ -508,7 +543,6 @@ void TC_Socket::connect(const string &sServerAddr, uint16_t port)
 int TC_Socket::connect(const struct sockaddr *pstServerAddr, SOCKET_LEN_TYPE serverLen)
 {
     return ::connect(_sock, pstServerAddr, serverLen);
-
 }
 
 void TC_Socket::listen(int iConnBackLog)
