@@ -377,14 +377,25 @@ void TC_EpollServer::Handle::handleOnceThread()
 		}
 	}
 
-	if (loop <= 0)
+
+	if (loop <= 0 && _dataBuffer->size(_handleIndex) > 0)
 	{
-		const shared_ptr<TC_CoroutineScheduler> &scheduler = TC_CoroutineScheduler::scheduler();
-		if(scheduler && scheduler->isMainCoroutine())
+		//NET_THREAD_MERGE_HANDLES_THREAD模式下，_dataBuffer中还有数据，需要通知再次处理
+		//NET_THREAD_QUEUE_HANDLES_THREAD模式下不需要通知，handleLoopThread循环中会自动再次处理
+		if (_epollServer->getOpenCoroutine() == NET_THREAD_MERGE_HANDLES_THREAD)
 		{
-			scheduler->notify();
+			notifyFilter();
 		}
 	}
+
+//	if (loop <= 0)
+//	{
+//		const shared_ptr<TC_CoroutineScheduler> &scheduler = TC_CoroutineScheduler::scheduler();
+//		if(scheduler && scheduler->isMainCoroutine())
+//		{
+//			scheduler->notify();
+//		}
+//	}
 }
 
 bool TC_EpollServer::Handle::isReady() const
@@ -820,7 +831,7 @@ int TC_EpollServer::Connection::checkFlow(TC_NetWorkBuffer& sendBuffer, size_t l
 //	且每个检查点, 积压长度都增加或者连续3次发送buffer字节小于1k, 就关闭连接, 主要避免极端情况
 
 	size_t iBackPacketBuffLimit = _pBindAdapter->getBackPacketBuffLimit();
-	if((_messageSize + sendBuffer.getBufferLength()) > iBackPacketBuffLimit)
+	if(iBackPacketBuffLimit > 0 && (_messageSize + sendBuffer.getBufferLength()) > iBackPacketBuffLimit)
 	{
 		if(_accumulateBufferSize == 0)
 		{

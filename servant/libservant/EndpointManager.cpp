@@ -239,52 +239,6 @@ void QueryEpBase::setObjName(const string & sObjName)
         notifyEndpoints(_activeEndpoints,_inactiveEndpoints,true);
     }
 }
-//
-//vector<string> QueryEpBase::sepEndpoint(const string& sEndpoints)
-//{
-//	vector<string>  vEndpoints;
-//	bool flag = false;
-//	string::size_type startPos = 0;
-//	string::size_type sepPos = 0;
-//	for(string::size_type pos = 0; pos < sEndpoints.size(); pos++)
-//	{
-//		if(sEndpoints[pos] == ':' && !flag )
-//		{
-//			sepPos = pos;
-//			flag = true;
-//		}
-//		else if(flag)
-//		{
-//			if(sEndpoints[pos] == ' ')
-//			{
-//				continue;
-//			}
-//
-//			if(TC_Port::strncasecmp("tcp", (sEndpoints.c_str() + pos), 3) == 0
-//			    || TC_Port::strncasecmp("udp", (sEndpoints.c_str() + pos), 3) == 0
-//			    || TC_Port::strncasecmp("ssl", (sEndpoints.c_str() + pos), 3) == 0)
-//			{
-//				string ep = TC_Common::trim(string(sEndpoints.c_str() + startPos, sepPos - startPos));
-//				if(!ep.empty()) {
-//					vEndpoints.push_back(ep);
-//				}
-//				startPos = pos;
-//			}
-//
-//			flag = false;
-//		}
-//	}
-//
-//	string ep = sEndpoints.substr(startPos);
-//
-//	if(!ep.empty()) {
-//		vEndpoints.push_back(ep);
-//	}
-//
-////	vEndpoints.push_back(sEndpoints.substr(startPos));
-//
-//	return vEndpoints;
-//}
 
 void QueryEpBase::setEndpoints(const string & sEndpoints, set<EndpointInfo> & setEndpoints)
 {
@@ -725,6 +679,9 @@ EndpointManager::~EndpointManager()
 void EndpointManager::onUpdateOutter()
 {
 //	LOG_CONSOLE_DEBUG << this->_objectProxy << ", valid:" << _valid << ", " << _outterUpdate.get() << endl;
+	assert(this->_objectProxy->getCommunicatorEpoll()->getThreadId() == this_thread::get_id());
+
+    lock_guard<mutex> l(_outterLocker);
     if(_outterUpdate)
     {
 		shared_ptr<OutterUpdate> outterUpdate = _outterUpdate;
@@ -741,14 +698,15 @@ void EndpointManager::updateEndpointsOutter(const set<EndpointInfo> & active, co
 {
 //	LOG_CONSOLE_DEBUG << this->_objectProxy << ", " << active.begin()->desc() << endl;
 	//创新新对象, 避免线程冲突
-    _outterUpdate = std::make_shared<OutterUpdate>();
-    _outterUpdate->active    = active;
-    _outterUpdate->inactive  = inactive;
+    shared_ptr<OutterUpdate> outterUpdate = std::make_shared<OutterUpdate>();
+	outterUpdate->active    = active;
+	outterUpdate->inactive  = inactive;
 
     //更新时间
 	_refreshTime = TNOWMS + _refreshInterval;
 
-//	updateEndpoints(active, inactive);
+    lock_guard<mutex> l(_outterLocker);
+	_outterUpdate = outterUpdate;
 }
 
 void EndpointManager::updateEndpoints(const set<EndpointInfo> & active, const set<EndpointInfo> & inactive)

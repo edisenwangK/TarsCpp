@@ -185,10 +185,35 @@ public:
 	{
 		return eJsonTypeArray;
 	}
+
+	/**
+	 *
+	 * @param p
+	 */
 	void push_back(const JsonValuePtr & p)
 	{
 		value.push_back(p);
 	}
+
+	/**
+	 * 查找某个指定类型的元素
+	 * @param type: 目前只支持三种类型: eJsonTypeNum, eJsonTypeBoolean, eJsonTypeString
+	 * @param value
+	 * @return
+	 */
+	vector<JsonValuePtr>::iterator  find(eJsonType type, const string &value);
+
+	/**
+	 * 查找某个指定类型的元素
+	 * @param type: 目前只支持三种类型: eJsonTypeNum, eJsonTypeBoolean, eJsonTypeString
+	 * @param value
+	 * @return
+	 */
+	vector<JsonValuePtr>::iterator  find(const JsonValuePtr &value);
+
+	/**
+	 *
+	 */
 	virtual ~JsonValueArray(){}
 public:
 	vector<JsonValuePtr> value;
@@ -321,9 +346,9 @@ public:
 	static JsonValuePtr getValue(const string & str);
     static JsonValuePtr getValue(const vector<char>& buf);
 
-	// 两个json串合并
-	static string mergeJson(const string& json1, const string& json2);
-	static void mergeJson(const string& json1, const string& json2, string& jsonRet);
+	// 两个json串合并, jsonHigh 合并入jsonLow， 如果有相同节点， 那么jsonHigh 覆盖jsonLow的对应节点值
+	static string mergeJson(const string& jsonLow, const string& jsonHigh);
+	static void mergeJson(const string& jsonLow, const string& jsonHigh, string& jsonRet);
 private:
 
 	static void mergeObj(JsonValuePtr from, JsonValuePtr to, vector<string>& path);

@@ -5,11 +5,135 @@
 #include <iostream>
 #include <iomanip>
 #include "util/tc_common.h"
+#include "util/tc_port.h"
 
 namespace tars
 {
 
 #define FILTER_SPACE while(isspace((int)c)) {c=reader.read();}
+
+vector<JsonValuePtr>::iterator JsonValueArray::find(eJsonType type, const string &e)
+{
+	if(type != eJsonTypeNum && type != eJsonTypeBoolean && type != eJsonTypeString)
+	{
+		return value.end();
+	}
+
+	for(auto it = value.begin(); it != value.end(); ++it)
+	{
+		auto i = *it;
+
+		if (i->getType() == type)
+		{
+			switch(type)
+			{
+			case eJsonTypeNum:
+			{
+				JsonValueNumPtr v = JsonValueNumPtr::dynamicCast(i);
+				if (v->isInt && v->lvalue == TC_Common::strto<int64_t>(e))
+				{
+					return it;
+				}
+				else if (!v->isInt &&
+						 TC_Common::equal(v->value, TC_Common::strto<double>(e)))
+				{
+					return it;
+				}
+				break;
+			}
+			case eJsonTypeString:
+			{
+				JsonValueStringPtr v = JsonValueStringPtr::dynamicCast(i);
+
+				if(v->value == e)
+				{
+					return it;
+				}
+
+				break;
+			}
+			case eJsonTypeBoolean:
+			{
+				JsonValueBooleanPtr v = JsonValueBooleanPtr::dynamicCast(i);
+				bool b = (TC_Port::strncasecmp(e.c_str(), "true", e.length()) == 0);
+
+				if(v->value == b)
+				{
+					return it;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+
+	return value.end();
+}
+
+vector<JsonValuePtr>::iterator  JsonValueArray::find(const JsonValuePtr &e)
+{
+	auto type = e->getType();
+
+	if(type != eJsonTypeNum && type != eJsonTypeBoolean && type != eJsonTypeString)
+	{
+		return value.end();
+	}
+
+	for(auto it = value.begin(); it != value.end(); ++it)
+	{
+		auto i = *it;
+
+		if (i->getType() == type)
+		{
+			switch(type)
+			{
+			case eJsonTypeNum:
+			{
+				JsonValueNumPtr v = JsonValueNumPtr::dynamicCast(i);
+				JsonValueNumPtr y = JsonValueNumPtr::dynamicCast(e);
+				if (v->isInt && v->lvalue == y->lvalue)
+				{
+					return it;
+				}
+				else if (!v->isInt && TC_Common::equal(v->value, y->value))
+				{
+					return it;
+				}
+				break;
+			}
+			case eJsonTypeString:
+			{
+				JsonValueStringPtr v = JsonValueStringPtr::dynamicCast(i);
+				JsonValueStringPtr y = JsonValueStringPtr::dynamicCast(e);
+
+				if(v->value == y->value)
+				{
+					return it;
+				}
+
+				break;
+			}
+			case eJsonTypeBoolean:
+			{
+				JsonValueBooleanPtr v = JsonValueBooleanPtr::dynamicCast(i);
+				JsonValueBooleanPtr y = JsonValueBooleanPtr::dynamicCast(e);
+
+				if(v->value == y->value)
+				{
+					return it;
+				}
+				break;
+			}
+			default:
+				break;
+			}
+		}
+	}
+
+	return value.end();
+}
 
 JsonValuePtr TC_Json::getValue(BufferJsonReader & reader)
 {
@@ -642,17 +766,17 @@ bool TC_Json::isspace(char c)
 }
 
 // 两个json串合并
-string TC_Json::mergeJson(const string& json1, const string& json2)
+string TC_Json::mergeJson(const string& jsonLow, const string& jsonHigh)
 {
 	string ret;
-	mergeJson(json1, json2, ret);
+	mergeJson(jsonLow, jsonHigh, ret);
 	return ret;
 }
 
-void TC_Json::mergeJson(const string& json1, const string& json2, string& jsonRet)
+void TC_Json::mergeJson(const string& jsonLow, const string& jsonHigh, string& jsonRet)
 {
-	JsonValuePtr p1 =TC_Json::getValue(json1);
-	JsonValuePtr p2 =TC_Json::getValue(json2);
+	JsonValuePtr p1 =TC_Json::getValue(jsonLow);
+	JsonValuePtr p2 =TC_Json::getValue(jsonHigh);
 	if (p1->getType() != eJsonTypeObj || p2->getType() != eJsonTypeObj)
 	{
 		throw TC_Json_Exception("Error: mergeing json string must be two json object string");
