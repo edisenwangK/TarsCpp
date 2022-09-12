@@ -140,13 +140,19 @@ void AdapterProxy::onCloseCallback(TC_Transceiver* trans, TC_Transceiver::CloseR
 		_objectProxy->getRootServantProxy()->tars_get_push_callback()->onClose();
     }
 
-    int second =_objectProxy->reconnect();
-
-    if(second > 0) 
+    int millisecond =_objectProxy->reconnect();
+    if (millisecond <= 0)
     {
-        _objectProxy->getCommunicatorEpoll()->reConnect(TNOWMS + second * 1000, trans);
-        TLOGERROR("[trans close:" << _objectProxy->name() << "," << trans->getConnectEndpoint().toString() << ", reconnect:" << second << "]" << endl);
-    }   
+        return;
+    }
+
+    if (_objectProxy->reconnectActiveInReg() && !isActiveInReg())
+    {
+        return;
+    }
+
+    _objectProxy->getCommunicatorEpoll()->reConnect(TNOWMS + millisecond, trans);
+    TLOGERROR("[trans close:" << _objectProxy->name() << "," << trans->getConnectEndpoint().toString() << ", reconnect:" << millisecond << " ms]" << endl);
 }
 
 void AdapterProxy::onConnectCallback(TC_Transceiver* trans)
@@ -216,7 +222,7 @@ void AdapterProxy::onCompletePackage(TC_Transceiver* trans)
 
 shared_ptr<TC_NetWorkBuffer::Buffer> AdapterProxy::onSendAuthCallback(TC_Transceiver* trans)
 {
-//	LOG_CONSOLE_DEBUG  << "fd:" << trans->fd() << ", " << trans << endl;
+	// LOG_CONSOLE_DEBUG  << "fd:" << trans->fd() << ", " << trans << endl;
 
     // 走框架的AK/SK认证
     BasicAuthInfo info;
@@ -229,7 +235,7 @@ shared_ptr<TC_NetWorkBuffer::Buffer> AdapterProxy::onSendAuthCallback(TC_Transce
     const int kAuthType = 0x40;
     RequestPacket request;
     request.sFuncName       = "InnerAuthServer";
-    request.sServantName    = "authServant";
+    request.sServantName    = _objectProxy->name();
     request.iVersion        = TARSVERSION;
     request.iRequestId      = 1;
     request.cPacketType     = TARSNORMAL;
@@ -242,6 +248,8 @@ shared_ptr<TC_NetWorkBuffer::Buffer> AdapterProxy::onSendAuthCallback(TC_Transce
 TC_NetWorkBuffer::PACKET_TYPE AdapterProxy::onVerifyAuthCallback(TC_NetWorkBuffer &buff, TC_Transceiver*trans)
 {
     shared_ptr<ResponsePacket> rsp = std::make_shared<ResponsePacket>();
+    const int kAuthType = 0x40;
+    rsp->iMessageType = kAuthType;
 
     TC_NetWorkBuffer::PACKET_TYPE ret = _objectProxy->getRootServantProxy()->tars_get_protocol().responseFunc(buff, *rsp.get());
 
@@ -881,10 +889,11 @@ void AdapterProxy::finishInvoke(ReqMessage * msg)
     {
         finishInvoke(msg->response->iRet != TARSSERVERSUCCESS);
     }
+
     //同步调用，唤醒ServantProxy线程
     if (msg->eType == ReqMessage::SYNC_CALL)
     {
-        if (!msg->sched)
+		if (!msg->sched)
         {
             assert(msg->pMonitor);
 
@@ -898,12 +907,12 @@ void AdapterProxy::finishInvoke(ReqMessage * msg)
         return ;
     }
 
-    //异步调用
+	//异步调用
     if (msg->eType == ReqMessage::ASYNC_CALL)
     {
-        if(!msg->sched)
+		if(!msg->sched)
         {
-            if (msg->callback->getNetThreadProcess())
+			if (msg->callback->getNetThreadProcess())
             {
                 //如果是本线程的回调，直接本线程处理
                 //比如获取endpoint
@@ -923,8 +932,8 @@ void AdapterProxy::finishInvoke(ReqMessage * msg)
             }
             else
             {
-                //异步回调，放入回调处理线程中
-                _objectProxy->getCommunicatorEpoll()->pushAsyncThreadQueue(msg);
+				//异步回调，放入回调处理线程中
+				_objectProxy->getCommunicatorEpoll()->pushAsyncThreadQueue(msg);
             }
         }
         else

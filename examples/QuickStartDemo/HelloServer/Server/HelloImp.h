@@ -42,6 +42,7 @@ public:
      */
     virtual void destroy();
 
+	virtual int doClose(tars::TarsCurrentPtr current);
     /**
      *
      */

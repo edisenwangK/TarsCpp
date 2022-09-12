@@ -1,3 +1,92 @@
+
+# v3.0.12 20220815
+
+### en
+
+- Fix: TC_Shm bug, can not delete shm after detach
+- Fix: http_call memory leak
+- Fix: tars2node list & map as interface paramters bug when http+json call bug
+- Fix: epoll server doResponse close connection when client close connection
+- Fix: getConnStatus bug that return all connections on all listen ports
+- Fix: the problem that no root servantproxy will not be called in the scenario where multi thread calls are started at the same time when serial calls are made(http mode).
+- Fix: Asynchronous callback if dyeing open, active enabledying is required
+- Feat: tars2node add tars_ping
+- Feat: add common_protocol_call, Support any short connection mode similar to http
+- Feat: Add server stat(Current)
+- Feat: Reconnect supports millisecond intervals, and supports reconnection only for those in active state in the master registration list, to avoid invalid operations after capacity reduction on k8s
+
+ 
+### cn
+- Fix: TC_Shm 修复无法删除shm的bug
+- Fix: http_call内存泄露的bug
+- Fix: tars2node修复当list & map作为接口参数时, 无法通过http+json调用的bug
+- Fix: epoll server 根据 doResponse参数来主动关闭连接的问题, 避免管理连接不及时
+- Fix: getConnStatus 修复返回了所有监听端口的连接的bug
+- Fix: 修复串行调用的时候，同时启动多线程调用的场景，非根servantproxy对应的prx不会被调用的问题
+- Fix: 异步回调如果判断如果染色了需要主动enableDyeing
+- Feat: tars2node 添加 tars_ping
+- Feat: ServantProxy添加 common_protocol_call, 支持任何类似http的短连接模式
+- Feat: 增加服务端请求统计(Current)
+- Feat: reconnect支持毫秒间隔，并且支持只对在主控注册列表里为active状态的进行重连，避免k8s上缩容后无效操作
+
+# v3.0.11 20220628
+
+### en
+
+- Add: tc_port add some func(now only work in linux)
+- Add: tc_file listDirectory add ignoreHide
+- Add: tc_common add UTC2LocalTime
+- Fix: tc_clientsocket unix local socket bug
+- Fix: tars2cpp sendResponse use TarsOutputStream
+### cn
+- Add: tc_port 添加了一些linux下的函数, 获取服务的启动时间
+- Add: tc_file listDirectory 添加 ignoreHide参数
+- Add: tc_common 添加 UTC2LocalTime函数
+- Fix: tc_clientsocket unix local socket bug
+- Fix: tars2cpp 回包时使用 TarsOutputStream, 减少一次内存copy
+
+# v3.0.10 20220606
+
+### en
+
+- Add: tc_clientsocket support unix local domain socket
+- Add: tc_http support unix local domain socket, Note that '/' used instead of '$' in the URL. If the port is 0, it is a local socket
+- Add: tc_docker use TC_Http::doRequest
+
+### cn
+
+- Add: tc_clientsocket 支持 unix 本地套接字
+- Add: tc_http 支持本地套接字, 注意 url 中/使用$代替, 端口为 0 的情况下为本地套接字
+- Add: tc_docker 使用 TC_Http::doRequest
+
+# v3.0.9 20220530
+
+### en
+
+- Fix: update gtest to fix compiler bug in high gcc
+- Fix: makefile.tars support .cc .c
+- Fix: TC_NetWorkBuffer bug, Optimize doProtocolAnalysis & getBuffers bug cause crash
+- Fix tc_logger thread use unique_ptr
+- Optimize: rpc tars_hash use uint32_t and tars2cpp tars_hash use uint32_t
+- Optimize: move AppProtocol func imp to cpp
+- Add: tc_docker add exec
+- Add: tc_config add erase/eraseDomain
+- Add: servant add doNoFunc
+- Add: add tars interface push support
+
+### en
+
+- 修复: 更新 gtest 在高版本 gcc 下编译的 bug
+- 修复: 修改 makefile.tars 支持 .cc .c
+- 修复: TC_NetWorkBuffer 优化 doProtocolAnalysis 逻辑以及 getBuffers 导致的 crash(windows 下)
+- 修复: tc_logger 线程指针使用 unique_ptr
+- 优化: rpc tars_hash 使用 uint32_t 以及 tars2cpp 调用 tars_hash 使用 uint32_t
+- 优化: AppProtocol 增加实现文件
+- 添加: tc_docker 添加 exec 函数
+- 添加: tc_config 添加 erase/eraseDomain
+- 添加: 服务端 servant 添加 doNoFunc
+- 添加: tars 接口支持 push 接口
+
 # v3.0.8 20220429
 
 ### en
@@ -8,7 +97,7 @@
 - Add: tc_json JsonValueArray add `find` func
 - Optimize: compiler not install openssl docs
 - Optimize: thread process may delay in epoll_server NET_THREAD_MERGE_HANDLES_THREAD mode
-- Add: TC_ThreadPoolHash::getThread 
+- Add: TC_ThreadPoolHash::getThread
 - Add: LOG_CONSOLE_DEBUG add millsecond time output
 - Fix: tc_http strnstr bug cause crash
 
@@ -22,7 +111,7 @@
 - 优化: NET_THREAD_MERGE_HANDLES_THREAD 模式下可能的延时问题
 - 添加: TC_ThreadPoolHash::getThread
 - 添加: LOG_CONSOLE_DEBUG 调整为毫秒输出, 方便调试
-- 修复: tc_http strnstr的bug导致的crash
+- 修复: tc_http strnstr 的 bug 导致的 crash
 
 # v3.0.7 20220328
 

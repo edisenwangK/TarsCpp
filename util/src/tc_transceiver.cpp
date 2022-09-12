@@ -31,6 +31,7 @@ protected:
 #define THROW_ERROR(x, r, y) { CloseClourse c(this, r, y); THROW_EXCEPTION_SYSCODE(x, y); }
 
 static const int BUFFER_SIZE = 16 * 1024;
+static const int MAX_BUFFER_SIZE = 1024 * 1024 * 10;
 uint64_t TC_Transceiver::LONG_NETWORK_TRANS_TIME = 1;
 ///////////////////////////////////////////////////////////////////////
 
@@ -814,9 +815,9 @@ int TC_Transceiver::doProtocolAnalysis(TC_NetWorkBuffer* buff)
 	{
 		do
 		{
-			ioriginal = buff->getBuffers().size();
+			ioriginal = buff->getBufferLength();
 			ret = _onParserCallback(*buff, this);
-			isurplus = buff->getBuffers().size();
+			isurplus = buff->getBufferLength();
 
 			if (ret == TC_NetWorkBuffer::PACKET_FULL || ret == TC_NetWorkBuffer::PACKET_FULL_CLOSE)
 			{
@@ -964,7 +965,9 @@ bool TC_TCPTransceiver::doResponse()
 //		int packetCount = 0;
 	do
 	{
-		auto data = _recvBuffer.getOrCreateBuffer(BUFFER_SIZE / 8, BUFFER_SIZE);
+//		auto data = _recvBuffer.getOrCreateBuffer(BUFFER_SIZE / 8, BUFFER_SIZE);
+		size_t expansion = std::max(std::min(_recvBuffer.getBufferLength(), (size_t)MAX_BUFFER_SIZE), (size_t)BUFFER_SIZE);
+		auto data = _recvBuffer.getOrCreateBuffer(BUFFER_SIZE / 8, expansion);
 
 		uint32_t left = (uint32_t)data->left();
 

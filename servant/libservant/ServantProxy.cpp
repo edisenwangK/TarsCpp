@@ -478,6 +478,11 @@ void ServantProxy::tars_reconnect(int second)
     forEachObject([=](ObjectProxy *o) { o->reconnect(second); });
 }
 
+void ServantProxy::tars_reconnect(int millisecond, bool onlyActiveInReg)
+{
+    forEachObject([=](ObjectProxy *o) { o->reconnect(millisecond, onlyActiveInReg); });
+}
+
 TC_Endpoint ServantProxy::tars_invoke_endpoint()
 {
     ServantProxyThreadData *td = ServantProxyThreadData::getData();
@@ -680,7 +685,7 @@ void ServantProxy::tars_async_ping()
 	tars_invoke_async(TARSONEWAY, "tars_ping", os, m, s, NULL);
 }
 
-ServantProxy* ServantProxy::tars_hash(int64_t key)
+ServantProxy* ServantProxy::tars_hash(uint32_t key)
 {
     ServantProxyThreadData *pSptd = ServantProxyThreadData::getData();
 
@@ -700,7 +705,7 @@ ServantProxy* ServantProxy::tars_hash(int64_t key)
 //	return this;
 //}
 
-ServantProxy* ServantProxy::tars_consistent_hash(int64_t key)
+ServantProxy* ServantProxy::tars_consistent_hash(uint32_t key)
 {
     ServantProxyThreadData *pSptd = ServantProxyThreadData::getData();
 
@@ -1085,7 +1090,6 @@ shared_ptr<ResponsePacket> ServantProxy::tars_invoke(char  cPacketType,
                               TarsOutputStream<BufferWriterVector>& buf,
                               const map<string, string>& context,
                               const map<string, string>& status)
-                            //   ResponsePacket& rsp)
 {
     ReqMessage * msg = new ReqMessage();
 
@@ -1101,19 +1105,12 @@ shared_ptr<ResponsePacket> ServantProxy::tars_invoke(char  cPacketType,
     msg->request.status       = status;
     msg->request.iTimeout     = _syncTimeout;
 
-//    // 在RequestPacket中的context设置主调信息
-//    if(_masterFlag)
-//    {
-//        msg->request.context.insert(std::make_pair(TARS_MASTER_KEY,ClientConfig::ModuleName));
-//    }
-
 	checkDye(msg->request);
 	checkTrace(msg->request);
 	checkCookie(msg->request);
 	servant_invoke(msg, false);
 
     shared_ptr<ResponsePacket> rsp = msg->response;
-    // rsp = msg->response;
 
 	delete msg;
 	msg = NULL;
@@ -1400,6 +1397,84 @@ void ServantProxy::http_call_async(const string &funcName, shared_ptr<TC_HttpReq
 	ServantProxyCallbackPtr callback = new HttpServantProxyCallback(cb);
 
 	msg->callback = callback;
+
+	servant_invoke(msg, bCoro);
+}
+
+void ServantProxy::common_protocol_call(const string &funcName, shared_ptr<TC_CustomProtoReq> &request, shared_ptr<TC_CustomProtoRsp> &response)
+{
+	if (_connectionSerial <= 0)
+	{
+		_connectionSerial = DEFAULT_CONNECTION_SERIAL;
+	}
+
+	ReqMessage *msg = new ReqMessage();
+
+	msg->init(ReqMessage::SYNC_CALL, this);
+	msg->bFromRpc = true;
+	msg->request.sFuncName    = funcName;
+
+	msg->request.sBuffer.resize(sizeof(shared_ptr<TC_CustomProtoReq>));
+
+	msg->deconstructor = [msg] {
+		shared_ptr<TC_CustomProtoReq> &data = *(shared_ptr<TC_CustomProtoReq> *)(msg->request.sBuffer.data());
+		data.reset();
+
+		if (!msg->response->sBuffer.empty())
+		{
+			shared_ptr<TC_CustomProtoRsp> &rsp = *(shared_ptr<TC_CustomProtoRsp> *)(msg->response->sBuffer.data());
+			//主动reset一次
+			rsp.reset();
+
+			msg->response->sBuffer.clear();
+		}
+	};
+
+	shared_ptr<TC_CustomProtoReq> &data = *(shared_ptr<TC_CustomProtoReq> *)(msg->request.sBuffer.data());
+
+	data = request;
+
+	servant_invoke(msg, false);
+
+	response = *(shared_ptr<TC_CustomProtoRsp> *)(msg->response->sBuffer.data());
+
+	delete msg;
+	msg = NULL;
+}
+
+void ServantProxy::common_protocol_call_async(const string &funcName, shared_ptr<TC_CustomProtoReq> &request, const ServantProxyCallbackPtr &cb, bool bCoro)
+{
+	if (_connectionSerial <= 0)
+	{
+		_connectionSerial = DEFAULT_CONNECTION_SERIAL;
+	}
+
+	ReqMessage *msg = new ReqMessage();
+
+	msg->init(ReqMessage::ASYNC_CALL, this);
+	msg->bFromRpc = true;
+	msg->request.sFuncName    = funcName;
+	msg->request.sServantName = tars_name();
+
+	msg->request.sBuffer.resize(sizeof(shared_ptr<TC_CustomProtoReq>));
+
+	msg->deconstructor = [msg] {
+		shared_ptr<TC_CustomProtoReq> &data = *(shared_ptr<TC_CustomProtoReq> *)(msg->request.sBuffer.data());
+		data.reset();
+
+		if (!msg->response->sBuffer.empty())
+		{
+			shared_ptr<TC_CustomProtoRsp> &rsp = *(shared_ptr<TC_CustomProtoRsp> *)(msg->response->sBuffer.data());
+			//主动reset一次
+			rsp.reset();
+
+			msg->response->sBuffer.clear();
+		}
+	};
+
+	*(shared_ptr<TC_CustomProtoReq> *)(msg->request.sBuffer.data()) = request;
+
+	msg->callback = cb;
 
 	servant_invoke(msg, bCoro);
 }
