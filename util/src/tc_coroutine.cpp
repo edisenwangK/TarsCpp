@@ -606,6 +606,7 @@ void TC_CoroutineScheduler::put(uint32_t iCoroId)
 {
     if(!_epoller->isTerminate())
     {
+        assert(iCoroId != 0 && iCoroId <= _currentSize);
         _activeCoroQueue.push_back(iCoroId);
 
 	    _epoller->notify();
