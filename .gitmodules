@@ -1,0 +1,4 @@
+[submodule "servant/protocol"]
+	url  = https://gitee.com/edisenwang/Fruit
+	path = servant/protocol
+
