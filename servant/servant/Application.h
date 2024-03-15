@@ -265,6 +265,12 @@ public:
     CommunicatorPtr& getApplicationCommunicator();
 
     /**
+     * application自己的获取远程系统配置
+     * @return
+     */
+    shared_ptr<RemoteConfig> getRemoteConfig() { return _remoteConfig; }
+
+    /**
      * 获取服务Server对象
      *
      * @return TC_EpollServerPtr&
@@ -604,9 +610,20 @@ protected:
     TC_EpollServer::BindAdapter::EOrder parseOrder(const string &s);
 
     /**
+     * 初始化adapter
+     */
+    void initializeAdapter();
+
+    /**
+     * 根据配置创建adapter
+     * @return
+     */
+    vector<TC_EpollServer::BindAdapterPtr> createAdapter();
+
+    /**
      * bind server adapter
      */
-    void bindAdapter(vector<TC_EpollServer::BindAdapterPtr> &adapters);
+    void bindAdapters();
 
     /**
      * set adapter

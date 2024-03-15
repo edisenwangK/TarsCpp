@@ -216,7 +216,9 @@ public:
         ServantProxy *pServantProxy = getServantProxy(objectName, setName, true);
         proxy = (typename T::element_type *)(pServantProxy);
     }
-
+    
+    ServantProxy * setServantProxy( ServantProxy * proxy, const string& objectName,const string& setName, bool rootServant);
+    
     /**
      * 获取公有网络线程个数
      * @return
@@ -447,7 +449,7 @@ protected:
 	 *
 	 * @param func
 	 */
-	void forEachSchedCommunicatorEpoll(std::function<void(const shared_ptr<CommunicatorEpoll> &)> func);
+	void forEachSchedCommunicatorEpoll(const std::function<void(const shared_ptr<CommunicatorEpoll> &)>& func);
 
 	/**
 	 * 创建一个协程内的网络通信器
@@ -516,17 +518,18 @@ protected:
     /*
      * 公有网络线程
      */
-    vector<shared_ptr<CommunicatorEpoll>>    _communicatorEpoll;//[MAX_CLIENT_THREAD_NUM];
+    vector<shared_ptr<CommunicatorEpoll>>    _communicatorEpoll;             //[MAX_CLIENT_THREAD_NUM];
 
     /**
      * 私有网络线程, 会动态变化
      */
-    unordered_map<size_t, shared_ptr<CommunicatorEpoll>>	_schedCommunicatorEpoll;
+//    unordered_map<size_t, shared_ptr<CommunicatorEpoll>>	_schedCommunicatorEpoll;
+    vector<shared_ptr<CommunicatorEpoll>>	_schedCommunicatorEpoll;        //MAX_CLIENT_NOTIFYEVENT_NUM
 
-    /**
-     * 操作通信器的锁
-     */
-    TC_SpinLock			_schedMutex;
+//    /**
+//     * 操作通信器的锁
+//     */
+//    TC_SpinLock			_schedMutex;
 
     /**
      * 锁

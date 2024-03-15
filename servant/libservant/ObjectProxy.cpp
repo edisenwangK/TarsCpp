@@ -273,27 +273,17 @@ void ObjectProxy::doInvokeException(ReqMessage * msg)
 				}
 				catch(exception & e)
 				{
-					TLOGERROR("[ObjectProxy::doInvokeException exp:"<<e.what()<<" ,line:"<<__LINE__<<endl);
+					TLOGERROR("[ObjectProxy::doInvokeException:" << msg->request.sServantName << ":" << msg->request.sFuncName << " error: " << e.what() <<endl);
 				}
 				catch(...)
 				{
-					TLOGERROR("[ObjectProxy::doInvokeException exp:unknown line:|"<<__LINE__<<endl);
+					TLOGERROR("[ObjectProxy::doInvokeException:" << msg->request.sServantName << ":" << msg->request.sFuncName << ", error" << endl);
 				}
 			}
 			else
 			{
-                //先确保adapter 非null
-                if (msg->adapter)
-                {
-                    //异步回调，放入回调处理线程中
-                    _communicatorEpoll->pushAsyncThreadQueue(msg);
-                }
-                else
-                {
-                    TLOGERROR("[ObjectProxy::doInvokeException push adapter is null|" << __LINE__ << endl);
-                    delete msg;
-                    msg = NULL;
-                }
+                _communicatorEpoll->pushAsyncThreadQueue(msg);
+                TLOGERROR("[ObjectProxy::doInvokeException " << msg->request.sServantName << ":" << msg->request.sFuncName << ", ret: " << msg->response->iRet << endl);
 			}
 		}
 		else
