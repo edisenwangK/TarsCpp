@@ -671,6 +671,8 @@ private:
      * 是否正在运行中
      */
     bool                    _ready = false;
+
+	std::mutex				_mutex;
 };
 
 /**
