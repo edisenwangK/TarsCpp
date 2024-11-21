@@ -24,12 +24,44 @@ message("----------------------------------------------------")
 list(APPEND DIR_SRCS ${JUMP_SRC})
 list(APPEND DIR_SRCS ${MAKE_SRC})
 
-add_library(tarsutil ${DIR_SRCS})
+add_library(tarsutil STATIC ${DIR_SRCS})
+
 add_dependencies(tarsutil thirdparty)
 
 install(TARGETS tarsutil
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
+
+if(ENABLE_SHARED)
+        ADD_DEFINITIONS( -DUTIL_DLL_EXPORT )
+        add_library(tarsutil_shared SHARED ${DIR_SRCS})
+
+        target_link_libraries(tarsutil_shared ${LIB_MYSQL})
+
+        if (TARS_SSL)
+                if (WIN32)
+                        #windows动态编译需添加依赖库
+                        target_link_libraries(tarsutil_shared ${LIB_SSL}.lib ${LIB_CRYPTO}.lib Crypt32)
+                else()
+                        target_link_libraries(tarsutil_shared ${LIB_SSL} ${LIB_CRYPTO})
+                endif ()
+        endif()
+
+        if(TARS_HTTP2)
+                target_link_libraries(tarsutil_shared nghttp2)
+        endif()
+        if(TARS_GZIP)
+                target_link_libraries(tarsutil_shared ${LIB_GZIP})
+        endif()        
+        add_dependencies(tarsutil_shared thirdparty)
+
+        install(TARGETS tarsutil_shared
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib)
+        if (WIN32)
+                install(FILES $<TARGET_PDB_FILE:tarsutil_shared> DESTINATION bin)
+        endif()
+endif()
 
 IF(WIN32)
 install(DIRECTORY epoll_windows/sys

@@ -1,6 +1,5 @@
-﻿#ifndef __TC_HTTP2_H__
-#define __TC_HTTP2_H__
-
+﻿#pragma once
+#include "util/tc_platform.h"
 #include "util/tc_http.h"
 #include "util/tc_spin_lock.h"
 #include "util/tc_network_buffer.h"
@@ -10,7 +9,7 @@ typedef struct nghttp2_session nghttp2_session;
 namespace tars
 {
 
-class TC_Http2
+class UTIL_DLL_API TC_Http2
 {
 public:
 	/**
@@ -93,7 +92,7 @@ protected:
 };
 
 
-class TC_Http2Server : public TC_Http2
+class UTIL_DLL_API TC_Http2Server : public TC_Http2
 {
 public:
 
@@ -170,7 +169,7 @@ protected:
 
 /////////////////////////////////////////////////////////////////////////////////
 
-class TC_Http2Client : public TC_Http2
+class UTIL_DLL_API TC_Http2Client : public TC_Http2
 {
 public:
 
@@ -227,7 +226,3 @@ private:
 };
 
 }
-
-//#endif
-
-#endif

@@ -1,9 +1,8 @@
-﻿#ifndef __TC_CAS_QUEUE_H_
-#define __TC_CAS_QUEUE_H_
-
+﻿#pragma once
 #include <deque>
 #include <vector>
 #include <cassert>
+#include "util/tc_platform.h"
 #include "util/tc_lock.h"
 #include "util/tc_spin_lock.h"
 
@@ -269,5 +268,4 @@ template<typename T, typename D> bool TC_CasQueue<T, D>::empty() const
 }
 
 }
-#endif
 

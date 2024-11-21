@@ -13,14 +13,14 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_RBTREE_H
-#define __TC_RBTREE_H
+#pragma once
 
 #include <iostream>
 #include <string>
 #include <cassert>
 #include <functional>
+#include "util/tc_platform.h"
+
 #include "util/tc_ex.h"
 #include "util/tc_pack.h"
 #include "util/tc_mem_chunk.h"
@@ -62,7 +62,7 @@ struct TC_RBTree_Exception : public TC_Exception
  *  
  *  支持dump到文件，或从文件load；
  */
-class TC_RBTree
+class UTIL_DLL_API TC_RBTree
 {
 public:
     struct RBTreeLockIterator;
@@ -1971,4 +1971,3 @@ protected:
 
 }
 
-#endif

@@ -14,13 +14,13 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_CGI_H
-#define __TC_CGI_H
+#pragma once
 
 #include <sstream>
 #include <istream>
 #include <map>
 #include <vector>
+#include "util/tc_platform.h"
 #include "util/tc_ex.h"
 
 namespace tars
@@ -60,7 +60,7 @@ ostream &operator<<(ostream &os, const TC_Cgi_Upload &tcCgiUpload);
 * @brief cgi上传文件操作，通过该类获取cgi上传的文件信息 
 * @brief CGI Uploaded File Operation, you can get cgi uploaded file info from this class.
 */
-class TC_Cgi_Upload
+class UTIL_DLL_API TC_Cgi_Upload
 {
 public:
     friend ostream &operator<<(ostream &os, const TC_Cgi_Upload &tcCgiUpload);
@@ -215,7 +215,7 @@ protected:
 * 如果有文件上传需要调用setUpload, 并且需要在parseCgi之前调用
 * setUpload, which is called by the uploaded files, needs to be called before parseCgi.  
 */
-class TC_Cgi
+class UTIL_DLL_API TC_Cgi
 {
 public:
 
@@ -691,4 +691,3 @@ protected:
 
 }
 
-#endif

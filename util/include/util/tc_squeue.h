@@ -13,18 +13,17 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_SQueue_H__
-#define __TC_SQueue_H__
+#pragma once
 
 #include <fcntl.h>
-// #include <unistd.h>
 #include <errno.h>
 #include <stdexcept>
 #include <iostream>
 #include <assert.h>
 #include <iostream>
 #include <string>
+#include "util/tc_platform.h"
+
 #include "util/tc_ex.h"
 /**
  * 结构化的queue，在一边读一边写的情况下可以不用加锁，是线程(进程)安全的
@@ -44,7 +43,7 @@ struct TC_SQueue_Exception : public TC_Exception
 	~TC_SQueue_Exception() throw(){};
 };
 
-class TC_SQueue
+class UTIL_DLL_API TC_SQueue
 {
 public:
 	TC_SQueue() {_header = NULL;_data = NULL;}
@@ -247,4 +246,3 @@ private:
 };
 
 }
-#endif

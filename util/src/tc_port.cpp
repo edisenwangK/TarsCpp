@@ -32,6 +32,7 @@
 #include <signal.h>
 #include <limits.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #else
 
 #pragma comment(lib, "ws2_32.lib")
@@ -200,6 +201,15 @@ FILE * TC_Port::fopen(const char * path, const char *  mode)
 #endif
 }
 
+int TC_Port::stat(const char * path, stat_t * buf)
+{
+#if TARGET_PLATFORM_WINDOWS
+    return ::_stat(path, buf);
+#else
+    return ::stat(path, buf);
+#endif
+}
+
 int TC_Port::lstat(const char * path, TC_Port::stat_t * buf)
 {
 #if TARGET_PLATFORM_WINDOWS
@@ -275,20 +285,53 @@ string TC_Port::getCwd()
     return currentDirectory;
 }
 
-void TC_Port::kill(int64_t pid)
+int TC_Port::kill(int64_t pid)
 {
 #if TARGET_PLATFORM_WINDOWS
     HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
-        if (hProcess == NULL)
-        {
-            return;
-        }
+    if (hProcess == NULL)
+    {
+        return -1;
+    }
 
-        ::TerminateProcess(hProcess, 0);
+    ::TerminateProcess(hProcess, 0);
 
-        CloseHandle(hProcess);
+    CloseHandle(hProcess);
+    return 0;
 #else
-    ::kill(static_cast<pid_t>(pid), SIGKILL);
+    int ret = ::kill(static_cast<pid_t>(pid), SIGKILL);
+    if(ret != 0 && errno != ESRCH && errno != ENOENT)
+    {
+        return -1;
+    }
+    else
+    {
+        waitpid(pid, NULL, WNOHANG);
+    }
+
+    return 0;
+#endif
+}
+
+int TC_Port::alive(int64_t pid)
+{
+#if TARGET_PLATFORM_WINDOWS
+    HANDLE hProcess = ::OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    if (hProcess == NULL)
+    {
+        return -1;
+    }
+
+    CloseHandle(hProcess);
+    return 0;
+#else
+    int ret = ::kill(static_cast<pid_t>(pid), 0);
+    if(ret != 0)
+    {
+        return -1;
+    }
+
+    return 0;
 #endif
 }
 
@@ -861,23 +904,23 @@ int64_t TC_Port::forkExec(const string& sExePath, const string& sPwdPath, const 
 #endif
 }
 
-shared_ptr<TC_Port::SigInfo> TC_Port::_sigInfo = std::make_shared<TC_Port::SigInfo>();
+//shared_ptr<TC_Port::SigInfo> TC_Port::SigInfo::getInstance() = std::make_shared<TC_Port::SigInfo>();
 
 size_t TC_Port::registerSig(int sig, std::function<void()> callback)
 {
-	std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
+	std::lock_guard<std::mutex> lock(SigInfo::getInstance()->_mutex);
 
-	auto it = _sigInfo->_callbacks.find(sig);
+	auto it = SigInfo::getInstance()->_callbacks.find(sig);
 
-	if(it == _sigInfo->_callbacks.end())
+	if(it == SigInfo::getInstance()->_callbacks.end())
 	{
 		//没有注册过, 才注册
 		registerSig(sig);
 	}
 
-	size_t id = ++_sigInfo->_callbackId;
+	size_t id = ++SigInfo::getInstance()->_callbackId;
 
-	_sigInfo->_callbacks[sig][id] = callback;
+    SigInfo::getInstance()->_callbacks[sig][id] = callback;
 
 	return id;
 }
@@ -885,12 +928,12 @@ size_t TC_Port::registerSig(int sig, std::function<void()> callback)
 void TC_Port::unregisterSig(int sig, size_t id)
 {
 	//注意_sigInfo是全局静态的, 有可能已经析构了, 需要特殊判断一下!
-	if(_sigInfo && _sigInfo.use_count() > 0)
+//	if(SigInfo::getInstance() && SigInfo::getInstance().use_count() > 0)
 	{
-		std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
-		auto it = _sigInfo->_callbacks.find(sig);
+		std::lock_guard<std::mutex> lock(SigInfo::getInstance()->_mutex);
+		auto it = SigInfo::getInstance()->_callbacks.find(sig);
 
-		if(it != _sigInfo->_callbacks.end())
+		if(it != SigInfo::getInstance()->_callbacks.end())
 		{
 			it->second.erase(id);
 		}
@@ -950,10 +993,10 @@ void TC_Port::sighandler( int sig_no )
 					   unordered_map<size_t, std::function<void()>> data;
 
 					   {
-					   	std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
+					   	std::lock_guard<std::mutex> lock(SigInfo::getInstance()->_mutex);
 
-					   	auto it = TC_Port::_sigInfo->_callbacks.find(sig_no);
-					   	if (it != TC_Port::_sigInfo->_callbacks.end())
+					   	auto it = SigInfo::getInstance()->_callbacks.find(sig_no);
+					   	if (it != SigInfo::getInstance()->_callbacks.end())
 						   {
 							   data = it->second;
 						   }
@@ -980,10 +1023,10 @@ BOOL WINAPI TC_Port::HandlerRoutine(DWORD dwCtrlType)
 					   unordered_map<size_t, std::function<void()>> data;
 
 					   {
-					   	std::lock_guard<std::mutex> lock(_sigInfo->_mutex);
+					   	std::lock_guard<std::mutex> lock(SigInfo::getInstance()->_mutex);
 
-						   auto it = _sigInfo->_callbacks.find(dwCtrlType);
-						   if (it != _sigInfo->_callbacks.end())
+						   auto it = SigInfo::getInstance()->_callbacks.find(dwCtrlType);
+						   if (it != SigInfo::getInstance()->_callbacks.end())
 						   {
 							   data = it->second;
 						   }

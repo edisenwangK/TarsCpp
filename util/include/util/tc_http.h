@@ -14,9 +14,9 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_HTTP_H_
-#define __TC_HTTP_H_
+#pragma once
 
+#include "util/tc_platform.h"
 #include "util/tc_ex.h"
 #include "util/tc_port.h"
 #include "util/tc_common.h"
@@ -138,7 +138,7 @@ class TC_HttpResponse;
  * rootPath:ftp://user:password@www.qq.com:8080/.
  */
 
-class TC_URL
+class UTIL_DLL_API TC_URL
 {
 public:
 
@@ -409,7 +409,7 @@ protected:
  * @brief  http协议解析类, 请求和响应都在该类中解析
  * @brief  HTTP protocol resolution class in which both requests and responses are resolved
  */
-class TC_Http
+class UTIL_DLL_API TC_Http
 {
 public:
 	static unordered_map<string, int> HEADER;
@@ -803,7 +803,7 @@ protected:
  * @brief 简单的Cookie管理类.
  * @brief Simple Cookie Management Class
  */
-class TC_HttpCookie
+class UTIL_DLL_API TC_HttpCookie
 {
 public:
     typedef map<string, string, TC_Http::CmpCase> http_cookie_data;
@@ -987,7 +987,7 @@ protected:
 
 /********************* TC_HttpResponse ***********************/
 
-class TC_HttpResponse : public TC_Http
+class UTIL_DLL_API TC_HttpResponse : public TC_Http
 {
 public:
 
@@ -1325,7 +1325,7 @@ protected:
 
 /********************* TC_HttpRequest ***********************/
 
-class TC_HttpRequest : public TC_Http
+class UTIL_DLL_API TC_HttpRequest : public TC_Http
 {
 public:
 
@@ -1788,5 +1788,3 @@ protected:
 
 
 }
-#endif
-

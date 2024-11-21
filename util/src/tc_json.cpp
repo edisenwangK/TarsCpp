@@ -621,6 +621,9 @@ void TC_Json::writeValue(const JsonValuePtr & p, string& ostr, bool withSpace)
 		case eJsonTypeBoolean:
 			writeBoolean(JsonValueBooleanPtr::dynamicCast(p), ostr);
 			break;
+        case eJsonTypeNull:
+            ostr += "null";
+            break;
 		default:
 			assert(false);
 	}
@@ -694,7 +697,18 @@ void TC_Json::writeNum(const JsonValueNumPtr & p, string& ostr)
 	}
 	else if (!p->isInt)
 	{
-		ss << TC_Common::tostr(p->value) ;
+        if(std::isinf(p->value))
+        {
+            ss << "null";
+        }
+        else if(std::isnan(p->value))
+        {
+            ss << "null";
+        }
+        else
+        {
+            ss << TC_Common::tostr(p->value);
+        }
 	}
 	else
 	{

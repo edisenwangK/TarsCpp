@@ -1,7 +1,7 @@
-﻿#ifndef __TC_GRPC_PROTOCOL_H__
-#define __TC_GRPC_PROTOCOL_H__
+﻿#pragma once
 
 #include <unordered_map>
+#include "util/tc_platform.h"
 #include "util/tc_network_buffer.h"
 #include "util/tc_spin_lock.h"
 #include "util/tc_http2.h"
@@ -12,7 +12,7 @@ namespace tars
 void addGrpcPrefix(string& body, bool compressed);
 bool RemoveGrpcPrefix(string& body, bool* compressed);
 
-class TC_GrpcServer : public TC_Http2Server
+class UTIL_DLL_API TC_GrpcServer : public TC_Http2Server
 {
 public:
 
@@ -57,7 +57,7 @@ protected:
 
 /////////////////////////////////////////////////////////////////////////////////
 
-class TC_GrpcClient : public TC_Http2Client
+class UTIL_DLL_API TC_GrpcClient : public TC_Http2Client
 {
 public:
 
@@ -108,6 +108,3 @@ private:
 
   
 }
-
-
-#endif  //__TC_GRPC_PROTOCOL_H__

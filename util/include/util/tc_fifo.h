@@ -14,8 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_FIFO_H
-#define __TC_FIFO_H
+#pragma once
 
 #include "util/tc_platform.h"
 
@@ -37,7 +36,7 @@ namespace tars
  *@brief  管道操作类. 
  *@brief  Pipeline operation.
  */
-class TC_Fifo
+class UTIL_DLL_API TC_Fifo
 {
 public:
 
@@ -157,5 +156,4 @@ private:
 
 #endif
 
-#endif
 

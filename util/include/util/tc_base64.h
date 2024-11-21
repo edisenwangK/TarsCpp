@@ -14,8 +14,8 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_BASE64_H
-#define __TC_BASE64_H
+#pragma once
+#include "util/tc_platform.h"
 
 #include <string>
 
@@ -36,7 +36,7 @@ namespace tars
 * @brief This class provides standard base64 encoding and decoding methods.
 * @brief 该类提供标准的base64的编码解码 
 */
-class TC_Base64
+class UTIL_DLL_API TC_Base64
 {
 public:
     /**
@@ -139,4 +139,3 @@ protected:
 };
 
 }
-#endif

@@ -42,7 +42,7 @@ bool TC_GZip::compress(const char *src, size_t length, string& buffer)
     static char gz_simple_header[] = { '\037', '\213', '\010', '\000', '\000', '\000', '\000', '\000', '\002', '\377' };
 
     size_t destLen   = sizeof(gz_simple_header) + length * 2;
-    char *out        = new char[destLen + 1];
+    char *out        = new char[destLen + 1 + 8];
 
     stream.next_out  = (Bytef *)out;
     stream.avail_out = destLen;
@@ -197,4 +197,27 @@ bool TC_GZip::uncompress(const char *src, size_t length, TC_GZip::Output* o)
 
 }
 
+#else
+
+
+namespace tars
+{
+
+bool TC_GZip::compress(const char *src, size_t length, string& buffer)
+{
+    throw TC_GZip_Exception("[TC_GZip::compress] zlib not support");
+
+}
+
+bool TC_GZip::compress(const char *src, size_t length, vector<char>& buffer)
+{
+    throw TC_GZip_Exception("[TC_GZip::compress] zlib not support");
+}
+
+bool TC_GZip::uncompress(const char *src, size_t length, TC_GZip::Output* o)
+{
+    throw TC_GZip_Exception("[TC_GZip::uncompress] zlib not support");
+}
+
+}
 #endif

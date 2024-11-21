@@ -14,16 +14,15 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_EX_H
-#define __TC_EX_H
-
+#pragma once
+#include "util/tc_platform.h"
 #include <stdexcept>
 #include <string>
+using namespace std;
 
 namespace tars
 {
 
-using namespace std;
 /////////////////////////////////////////////////
 /** 
 * @file  tc_ex.h 
@@ -36,7 +35,7 @@ using namespace std;
 * @brief 异常类.
 * @brief Exception Class
 */
-class TC_Exception : public exception
+class UTIL_DLL_API TC_Exception : public exception
 {
 public:
     /**
@@ -144,5 +143,4 @@ private:
     }
 
 }
-#endif
 

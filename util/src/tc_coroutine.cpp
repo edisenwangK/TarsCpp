@@ -297,7 +297,7 @@ void TC_CoroutineInfo::corotineProc(void * args, transfer_t t)
 
 ///////////////////////////////////////////////////////////////////////////////////////////
 
-thread_local shared_ptr<TC_CoroutineScheduler> TC_CoroutineScheduler::g_scheduler;
+thread_local shared_ptr<TC_CoroutineScheduler> g_scheduler;
 
 const shared_ptr<TC_CoroutineScheduler> &TC_CoroutineScheduler::create()
 {
@@ -498,7 +498,7 @@ void TC_CoroutineScheduler::run()
 		bool activeCoroQueue_empty;
 
 		{
-			std::unique_lock<std::mutex> lock(_mutex);
+			std::lock_guard<std::mutex> lock(_mutex);
 			activeCoroQueue_empty = _activeCoroQueue.empty();
 		}
 
@@ -540,11 +540,11 @@ void TC_CoroutineScheduler::run()
 			switchCoro(coro);
 		}
 
-        //没有任何可执行的写成了, 直接退出!
-        if(_usedSize == 0 && _noCoroutineCallback)
-        {
-            _noCoroutineCallback(this);
-        }
+		//没有任何可执行的写成了, 直接退出!
+		if(_usedSize == 0 && _noCoroutineCallback)
+		{
+			_noCoroutineCallback(this);
+		}
 	}
 
 	destroy();
@@ -554,69 +554,69 @@ void TC_CoroutineScheduler::run()
 
 void TC_CoroutineScheduler::yield(bool bFlag)
 {
-    //主协程不允许yield
-    if(_currentCoro->getUid() == 0)
-    {
-        return;
-    }
+	//主协程不允许yield
+	if(_currentCoro->getUid() == 0)
+	{
+		return;
+	}
 
-    if(bFlag)
-    {
-	    _needActiveCoroId.push_back(_currentCoro->getUid());
-    }
+	if(bFlag)
+	{
+		_needActiveCoroId.push_back(_currentCoro->getUid());
+	}
 
-    moveToInactive(_currentCoro);
-    switchCoro(&_mainCoro);
+	moveToInactive(_currentCoro);
+	switchCoro(&_mainCoro);
 }
 
 void TC_CoroutineScheduler::sleep(int iSleepTime)
 {
-    //主协程不允许sleep
-    if(_currentCoro->getUid() == 0)
-        return;
+	//主协程不允许sleep
+	if(_currentCoro->getUid() == 0)
+		return;
 
-    int64_t iNow = TNOWMS;
-    int64_t iTimeout = iNow + (iSleepTime >= 0 ? iSleepTime : -iSleepTime);
+	int64_t iNow = TNOWMS;
+	int64_t iTimeout = iNow + (iSleepTime >= 0 ? iSleepTime : -iSleepTime);
 
-    _timeoutCoroId.insert(make_pair(iTimeout, _currentCoro->getUid()));
+	_timeoutCoroId.insert(make_pair(iTimeout, _currentCoro->getUid()));
 
-    moveToTimeout(_currentCoro);
+	moveToTimeout(_currentCoro);
 
-    _epoller->postAtTime(iTimeout, [](){});
+	_epoller->postAtTime(iTimeout, [](){});
 
-    switchCoro(&_mainCoro);
+	switchCoro(&_mainCoro);
 }
 
 void TC_CoroutineScheduler::wakeupbyself()
 {
-    if(!_needActiveCoroId.empty() && !_epoller->isTerminate())
-    {
-        list<uint32_t>::iterator it = _needActiveCoroId.begin();
-        while(it != _needActiveCoroId.end())
-        {
-            TC_CoroutineInfo *coro = _all_coro[*it];
+	if(!_needActiveCoroId.empty() && !_epoller->isTerminate())
+	{
+		list<uint32_t>::iterator it = _needActiveCoroId.begin();
+		while(it != _needActiveCoroId.end())
+		{
+			TC_CoroutineInfo *coro = _all_coro[*it];
 
-            assert(coro != NULL);
+			assert(coro != NULL);
 
-            moveToAvail(coro);
+			moveToAvail(coro);
 
-            ++it;
-        }
-        _needActiveCoroId.clear();
-    }
+			++it;
+		}
+		_needActiveCoroId.clear();
+	}
 }
 
 void TC_CoroutineScheduler::put(uint32_t iCoroId)
 {
-    if(!_epoller->isTerminate())
-    {
+	if(!_epoller->isTerminate())
+	{
 		{
-			std::unique_lock<std::mutex> lock(_mutex);
+			std::lock_guard<std::mutex> lock(_mutex);
 			_activeCoroQueue.push_back(iCoroId);
 		}
 
 		_epoller->notify();
-    }
+	}
 }
 
 void TC_CoroutineScheduler::wakeup()
@@ -625,8 +625,7 @@ void TC_CoroutineScheduler::wakeup()
 
 	deque<uint32_t> coroIds;
 	{
-		std::unique_lock<std::mutex> lock(_mutex);
-		if(_activeCoroQueue.empty()) return ;
+		std::lock_guard<std::mutex> lock(_mutex);
 		_activeCoroQueue.swap(coroIds);
 	}
 
@@ -644,30 +643,6 @@ void TC_CoroutineScheduler::wakeup()
 
 		++it;
 	}
-
-	/*
-	   if(!_activeCoroQueue.empty() && !_epoller->isTerminate())
-	   {
-	   deque<uint32_t> coroIds;
-
-	   _activeCoroQueue.swap(coroIds);
-
-	   auto it = coroIds.begin();
-
-	   auto itEnd = coroIds.end();
-
-	   while(it != itEnd)
-	   {
-	   TC_CoroutineInfo *coro = _all_coro[*it];
-
-	   assert(coro != NULL);
-
-	   moveToActive(coro);
-
-	   ++it;
-	   }
-	   }
-	   */
 }
 
 void TC_CoroutineScheduler::wakeupbytimeout()

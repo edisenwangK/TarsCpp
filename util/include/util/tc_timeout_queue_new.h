@@ -13,20 +13,17 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_TIMEOUT_QUEUE_NEW_H
-#define __TC_TIMEOUT_QUEUE_NEW_H
+#pragma once
 
 #include <map>
 #include <list>
 #include <functional>
-// #include <ext/hash_map>
 #include <unordered_map>
 #include <iostream>
 #include <cassert>
+#include "util/tc_platform.h"
 #include "util/tc_autoptr.h"
 #include "util/tc_monitor.h"
-// #include "util/tc_functor.h"
 #include "util/tc_timeprovider.h"
 
 using namespace std;
@@ -309,7 +306,7 @@ template<typename T> void TC_TimeoutQueueNew<T>::timeout(data_functor &df)
         if(_time.end() == it || it->first>iNow)
             break;
 
-        ptr=it->second->second.ptr;
+        ptr=it->second.dataIter->second.ptr;
         if(!it->second.dataIter->second.hasSend)
         {
             _send.erase(it->second.dataIter->second.sendIter);
@@ -340,4 +337,3 @@ template<typename T> bool TC_TimeoutQueueNew<T>::erase(uint32_t uniqId, T & t)
 }
 /////////////////////////////////////////////////////////////////
 }
-#endif

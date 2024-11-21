@@ -28,15 +28,31 @@ foreach(LEC_YACC_SRC ${DEPENDS_LEC_YACC_SRC_LIST})
 
 endforeach()
 
-add_library(${TARGETNAME} ${DIR_SRCS} ${DEPENDS_SRC_LIST})
+add_library(${TARGETNAME} STATIC ${DIR_SRCS} ${DEPENDS_SRC_LIST})
 
 if(UNIX)
     add_dependencies(${TARGETNAME} COPY-LEX-YACC)
 endif(UNIX)
 
-install(TARGETS tarsparse
+install(TARGETS ${TARGETNAME}
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)
+
+if(ENABLE_SHARED)
+        add_library(${TARGETNAME}_shared SHARED ${DIR_SRCS} ${DEPENDS_SRC_LIST})
+        add_dependencies(${TARGETNAME}_shared ${TARGETNAME})
+        target_compile_definitions(${TARGETNAME}_shared PRIVATE UTIL_DLL_EXPORT)
+
+        target_link_libraries(${TARGETNAME}_shared tarsutil_shared)
+
+        install(TARGETS ${TARGETNAME}_shared
+                LIBRARY DESTINATION lib
+                ARCHIVE DESTINATION lib)
+
+        if (WIN32)
+        install(FILES $<TARGET_PDB_FILE:${TARGETNAME}_shared> DESTINATION bin)
+        endif()
+endif()
 
 FILE(GLOB HEADERS "*.h")
 install(FILES  ${HEADERS} DESTINATION include/tarsparse)
