@@ -13,9 +13,7 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_SHM_H__
-#define __TC_SHM_H__
+#pragma once
 
 #include "util/tc_platform.h"
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
@@ -59,7 +57,7 @@ typedef int SHMID;
 * 2 _bOwner=false: 析够时不detach共享内存 
 * 3 _bOwner=true: 析够时detach共享内存
 */
-class TC_Shm
+class UTIL_DLL_API TC_Shm
 {
 public:
 
@@ -181,4 +179,3 @@ protected:
 
 }
 
-#endif

@@ -1,5 +1,4 @@
-﻿#ifndef __TC_DOCKER_H_
-#define __TC_DOCKER_H_
+﻿#pragma once
 
 #include <string>
 #include <map>
@@ -8,7 +7,7 @@
 #include <assert.h>
 
 #include <stdio.h>
-
+#include "util/tc_platform.h"
 #include "util/tc_autoptr.h"
 #include "util/tc_json.h"
 
@@ -28,7 +27,7 @@ class TC_HttpResponse;
  * 注意:
  * - 同步等待操作docker, 会阻塞
  */
-class TC_Docker
+class UTIL_DLL_API TC_Docker
 {
 public:
 
@@ -213,5 +212,4 @@ protected:
 };
 }
 
-#endif
 

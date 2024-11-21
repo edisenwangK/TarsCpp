@@ -14,10 +14,10 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_MEM_QUEUE_H__
-#define __TC_MEM_QUEUE_H__
+#pragma once
 
 #include <string>
+#include "util/tc_platform.h"
 
 using namespace std;
 
@@ -42,7 +42,7 @@ namespace tars
 * 做了保护，即使被kill掉，队列不会坏掉，最多错误一个数据
 * Protected so that even if killed, the queue will not break, at most one data error
 */
-class TC_MemQueue
+class UTIL_DLL_API TC_MemQueue
 {
 public:
 
@@ -277,4 +277,3 @@ protected:
 
 }
 
-#endif

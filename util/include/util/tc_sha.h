@@ -13,13 +13,13 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TARS_TC_SHA_H
-#define __TARS_TC_SHA_H
+#pragma once
 
 #include <string>
 #include <vector>
 #include <stdint.h>
+#include "util/tc_platform.h"
+
 #include "util/tc_ex.h"
 using namespace std;
 
@@ -60,7 +60,7 @@ struct TC_SHA_Exception : public TC_Exception
  * @brief sha各种hash算法, 
  *
  */
-class TC_SHA
+class UTIL_DLL_API TC_SHA
 {
 public:
     /**
@@ -173,5 +173,4 @@ public:
 };
 
 }
-#endif
 

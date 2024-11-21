@@ -1,5 +1,4 @@
-﻿#ifndef _TC_TEA_H_
-#define _TC_TEA_H_
+﻿#pragma once
 
 #include "util/tc_platform.h"
 #include <vector>
@@ -34,7 +33,7 @@ struct TC_Tea_Exception : public TC_Exception
 /**
  * @brief tea算法，通常用第二代算法 
  */
-class TC_Tea
+class UTIL_DLL_API TC_Tea
 {
 public:
 
@@ -61,6 +60,4 @@ public:
 };
 
 }
-
-#endif
 

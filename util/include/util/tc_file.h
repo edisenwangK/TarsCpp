@@ -14,8 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_FILE_H_
-#define __TC_FILE_H_
+#pragma once
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -62,7 +61,7 @@ struct TC_File_Exception : public TC_Exception
 * @brief 常用文件名处理函数.
 *  
 */
-class TC_File
+class UTIL_DLL_API TC_File
 {
 public:
 
@@ -341,4 +340,3 @@ private:
     static bool isPanfu(const string & sPath);
 };
 }
-#endif // TC_FILE_H

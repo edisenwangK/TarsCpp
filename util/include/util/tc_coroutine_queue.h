@@ -14,14 +14,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_COROUTINE_QUEUE_H_
-#define __TC_COROUTINE_QUEUE_H_
+#pragma once
 
 #include <deque>
 #include <vector>
 #include <cassert>
 #include <mutex>
 #include <unordered_set>
+#include "util/tc_platform.h"
 #include "util/tc_coroutine.h"
 
 using namespace std;
@@ -359,5 +359,4 @@ template<typename T, typename D> bool TC_CoroutineQueue<T, D>::empty() const
 }
 
 }
-#endif
 

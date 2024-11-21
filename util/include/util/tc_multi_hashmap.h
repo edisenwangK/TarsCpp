@@ -14,14 +14,14 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_MULTI_HASHMAP_H__
-#define __TC_MULTI_HASHMAP_H__
+#pragma once
 
 #include <vector>
 #include <memory>
 #include <cassert>
 #include <iostream>
 #include <functional>
+#include "util/tc_platform.h"
 #include "util/tc_ex.h"
 #include "util/tc_mem_vector.h"
 #include "util/tc_pack.h"
@@ -60,7 +60,7 @@ struct TC_Multi_HashMap_Exception : public TC_Exception
  * 所有存储的地址均采用32位保存，为内存块的索引，要求总内存块数不能超过32位范围
  * All stored addresses are 32-bit, indexed by memory blocks, requiring that the total number of memory blocks do not exceed the 32-bit range
  */
-class TC_Multi_HashMap
+class UTIL_DLL_API TC_Multi_HashMap
 {
 public:
     struct HashMapIterator;
@@ -3337,6 +3337,4 @@ protected:
 };
 
 }
-
-#endif
 

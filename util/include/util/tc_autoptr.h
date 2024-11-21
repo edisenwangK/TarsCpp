@@ -14,9 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_AUTOPTR_H
-#define __TC_AUTOPTR_H
-
+#pragma once
 #include "util/tc_ex.h"
 #include "util/tc_platform.h"
 #include <atomic>
@@ -43,7 +41,7 @@ struct TC_AutoPtrNull_Exception : public TC_Exception
  * 所有需要智能指针支持的类都需要从该对象继承，
  *  
  */
-class UTIL_DLL_API TC_HandleBase
+class TC_HandleBase
 {
 public:
 
@@ -534,4 +532,3 @@ inline bool operator<(const TC_AutoPtr<T>& lhs, const TC_AutoPtr<U>& rhs)
 
 }
 
-#endif

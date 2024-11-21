@@ -13,9 +13,7 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_SOCKET_H
-#define __TC_SOCKET_H
+#pragma once
 
 #include "util/tc_platform.h"
 
@@ -86,7 +84,7 @@ struct TC_SocketConnect_Exception : public TC_Socket_Exception
 /**
 * @brief  Socket类, 封装了socket的基本方法
 */
-class TC_Socket
+class UTIL_DLL_API TC_Socket
 {
 public:
     /**
@@ -655,4 +653,3 @@ protected:
 };
 
 }
-#endif

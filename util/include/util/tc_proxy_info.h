@@ -13,9 +13,8 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef TC_CPP_PROXYINFO_H
-#define TC_CPP_PROXYINFO_H
+#pragma once
+#include "util/tc_platform.h"
 
 #include "util/tc_clientsocket.h"
 
@@ -35,7 +34,7 @@ namespace tars
  * 6 检查isSuccess, 如果不成功, 则跳转到3, 直到isSuccess
  * 7 期间检查sendProxyPacket & recvProxyPacket的返回值, 如果为false, 则表示鉴权不通过.
  */
-class TC_ProxyInfo
+class UTIL_DLL_API TC_ProxyInfo
 {
 public:
 	TC_ProxyInfo(const TC_Endpoint & ep, const string & user, const string & pass)
@@ -283,4 +282,3 @@ public:
 
 }
 
-#endif //TARS_CPP_PROXYINFO_H

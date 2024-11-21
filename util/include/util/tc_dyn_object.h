@@ -14,10 +14,10 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_DYN_OBJECT_H
-#define __TC_DYN_OBJECT_H
+#pragma once
 
 #include <iostream>
+#include "util/tc_platform.h"
 
 namespace tars
 {
@@ -61,7 +61,7 @@ struct TC_DYN_Init
     }
 };
 
-class TC_DYN_Object
+class UTIL_DLL_API TC_DYN_Object
 {
 public:
     TC_DYN_Object(){};
@@ -105,5 +105,4 @@ public: \
     
 }
 
-#endif
 

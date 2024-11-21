@@ -161,11 +161,11 @@ Application::Application()
 
 Application::~Application()
 {
-	if(_epollServer)
-	{
-		_epollServer->terminate();
-		_epollServer = nullptr;
-	}
+//	if(_epollServer)
+//	{
+//		_epollServer->terminate();
+//		_epollServer = nullptr;
+//	}
 #if TARGET_PLATFORM_WINDOWS
     WSACleanup();
 #endif
@@ -211,11 +211,6 @@ void reportRspQueue(TC_EpollServer *epollServer)
     }
 }
 
-//void heartBeatFunc(const string& adapterName)
-//{
-//    TARS_KEEPALIVE(adapterName);
-//}
-//
 void Application::manualListen()
 {
     vector<TC_EpollServer::BindAdapterPtr> v = getEpollServer()->getBindAdapters();
@@ -273,9 +268,16 @@ void Application::terminate()
 
             _masterSlaveCheckThread->join();
         }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); //稍微休息一下, 让当前处理包能够回复
 
         _epollServer->terminate();
+
+        //结束application的通信器
+        if(_applicationCommunicator && _applicationCommunicator.get() != _communicator.get())
+        {
+            _applicationCommunicator->terminate();
+        }
     }
 }
 

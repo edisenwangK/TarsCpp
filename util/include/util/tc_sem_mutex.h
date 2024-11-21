@@ -14,8 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_SEM_MUTEX_H
-#define __TC_SEM_MUTEX_H
+#pragma once
 
 #include "util/tc_platform.h"
 
@@ -61,7 +60,7 @@ typedef int key_t;
 * 2 采用IPC的信号量实现
 * 3 信号量采用了SEM_UNDO参数, 当进程结束时会自动调整信号量
 */
-class TC_SemMutex
+class UTIL_DLL_API TC_SemMutex
 {
 public:
     /**
@@ -195,7 +194,3 @@ protected:
 };
 
 }
-
-#endif
-
-//#endif

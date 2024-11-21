@@ -14,12 +14,12 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef _TC_LOCK_H
-#define _TC_LOCK_H
+#pragma once
 
 #include <string>
 #include <stdexcept>
 #include <cerrno>
+#include "util/tc_platform.h"
 #include "util/tc_ex.h"
 
 using namespace std;
@@ -312,5 +312,4 @@ private:
 };
 
 };
-#endif
 

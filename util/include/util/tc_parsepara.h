@@ -13,12 +13,11 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_PARSEPARA_H
-#define __TC_PARSEPARA_H
+#pragma once
 
 #include <map>
 #include <string>
+#include "util/tc_platform.h"
 
 using namespace std;
 
@@ -46,7 +45,7 @@ namespace tars
 * @param 型如name=value&name=value字符串
 * @param : Types such as name=value&name=value string
 */
-class TC_Parsepara
+class UTIL_DLL_API TC_Parsepara
 {
 public:
 
@@ -254,4 +253,3 @@ protected:
 };
 
 }
-#endif /*_TC_PARSEPARA_H*/

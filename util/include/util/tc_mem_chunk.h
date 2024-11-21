@@ -13,12 +13,11 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_MEM_CHUNK_H__
-#define __TC_MEM_CHUNK_H__
+#pragma once
 
 #include <string>
 #include <vector>
+#include "util/tc_platform.h"
 
 using namespace std;
 
@@ -39,7 +38,7 @@ namespace tars
 * 将连续的内存分成大小相同的块,形成链表,并能够分配和释放这些大小相同的快
 * Divides contiguous memory into blocks of the same size, forms a chain table, and is able to allocate and release these blocks of the same size quickly
 */
-class TC_MemChunk
+class UTIL_DLL_API TC_MemChunk
 {
 public:
 
@@ -276,7 +275,7 @@ private:
 * TC_MemChunk 暂时只支持同一个Block大小的MemChunk 
 * TC_MemChunk temporarily only supports MemChunk of the same block size
 */
-class TC_MemChunkAllocator
+class UTIL_DLL_API TC_MemChunkAllocator
 {
 public:
 
@@ -510,7 +509,7 @@ private:
  * 自动计算出块的个数(每种大小块的个数相同) 
  * Automatically calculate the number of blocks (the same number for each size)
  */
-class TC_MemMultiChunkAllocator
+class UTIL_DLL_API TC_MemMultiChunkAllocator
 {
 public:
 
@@ -798,4 +797,3 @@ private:
 
 }
 
-#endif

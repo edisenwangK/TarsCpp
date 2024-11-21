@@ -13,15 +13,14 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef TC_CPP_TC_NETWORKBUFFER_H
-#define TC_CPP_TC_NETWORKBUFFER_H
+#pragma once
 
 #include <list>
 #include <vector>
 #include <functional>
 #include <iostream>
 #include <memory>
+#include "util/tc_platform.h"
 #include "util/tc_socket.h"
 
 /////////////////////////////////////////////////
@@ -61,7 +60,7 @@ struct TC_NetWorkBuffer_Exception : public TC_Exception
 	~TC_NetWorkBuffer_Exception() {};
 };
 
-class TC_NetWorkBuffer
+class UTIL_DLL_API TC_NetWorkBuffer
 {
 public:
 	////////////////////////////////////////////////////////////////////////////
@@ -86,7 +85,7 @@ public:
 	/**
 	   * buffer
 	   */
-	class Buffer
+	class UTIL_DLL_API Buffer
 	{
 	public:
 
@@ -1059,4 +1058,3 @@ protected:
 
 }
 
-#endif //TARS_CPP_TC_NETWORKBUFFER_H

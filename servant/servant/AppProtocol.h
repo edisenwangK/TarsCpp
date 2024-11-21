@@ -13,9 +13,7 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TARS_PROTOCOL_H_
-#define __TARS_PROTOCOL_H_
+#pragma once
 
 #include <string>
 #include <memory>
@@ -25,6 +23,7 @@
 #include "tup/tup.h"
 #include "servant/BaseF.h"
 #include "util/tc_network_buffer.h"
+#include "servant/Global.h"
 
 using namespace std;
 using namespace tup;
@@ -56,7 +55,7 @@ class TC_Transceiver;
 /**
  * 协议解析
  */
-class AppProtocol
+class SVT_DLL_API AppProtocol
 {
 public:
     /**
@@ -319,8 +318,13 @@ public:
     request_protocol requestFunc;
 
     response_protocol responseFunc;
+
+    /**
+     * 开启openalive, 如果keepAliveCallback未设置则直接发包, 如果keepAliveCallback设置, 则回调(不再发tars_ping)
+     * 如果是非tars协议如果开启openalive, 则需要设置keepAliveCallback, 自己发包
+     */
+    std::function<void(ServantPrx)>  keepAliveCallback;
 };
 
 //////////////////////////////////////////////////////////////////////
 }
-#endif

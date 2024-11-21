@@ -28,6 +28,7 @@ WinServer::initialize()
 
 void WinServer::destroyApp()
 {
+    _destroyApp = true;
 }
 
 void WinServer::run()

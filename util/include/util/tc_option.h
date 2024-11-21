@@ -13,14 +13,14 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_OPTION_H
-#define __TC_OPTION_H
+#pragma once
 
 #include <map>
 #include <vector>
 #include <string>
 #include <sstream>
+#include "util/tc_platform.h"
+
 using namespace std;
 
 namespace tars
@@ -40,7 +40,7 @@ namespace tars
  * 支持以下形式的参数:  ./main.exe --name=value --with abc def 
  * The following form of parameters are supported: ./main.exe --name=value --with abc def 
  */
-class TC_Option
+class UTIL_DLL_API TC_Option
 {
 public:
     /**
@@ -131,6 +131,14 @@ public:
      */
     vector<string>& getSingle();
 
+
+    /**
+     * @brief 将命令行分割成参数数组, 使用" \t"分割, 如果碰到"则不分割
+     * @param input
+     * @return
+     */
+    static std::vector<std::string> parseString(const std::string& input);
+
 protected:
 
     /**
@@ -143,12 +151,6 @@ protected:
      */
     void parse(const string &s);
 
-    /**
-     * @brief 使用" \t"分割, 如果碰到"则不分割
-     * @param input
-     * @return
-     */
-    std::vector<std::string> parseString(const std::string& input);
 protected:
     /**
      *存放标识和其对应参数的对应关系，例如：对于--name=value，存放name和value
@@ -164,6 +166,4 @@ protected:
 };
 
 }
-
-#endif
 

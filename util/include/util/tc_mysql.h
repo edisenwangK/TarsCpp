@@ -14,8 +14,7 @@
  * specific language governing permissions and limitations under the License.
  */
 
-#ifndef __TC_MYSQL_H
-#define __TC_MYSQL_H
+#pragma once
 
 #include "util/tc_platform.h"
 #include "mysql.h"
@@ -51,7 +50,7 @@ struct TC_Mysql_Exception : public TC_Exception
 * @brief 数据库配置接口
 * @brief Database configuration interface
 */
-struct TC_DBConf
+struct UTIL_DLL_API TC_DBConf
 {
     /**
     * 主机地址
@@ -95,13 +94,13 @@ struct TC_DBConf
     int _flag;
 
     /**
-    * 连接超时
+    * 连接超时(秒)
     * Port
     */
     int _connectTimeout;
 
     /**
-    * 读写超时
+    * 读写超时(秒)
     * Port
     */
     int _writeReadTimeout;
@@ -181,7 +180,7 @@ struct TC_DBConf
 * TC_Mysql::DB_STR表示组装sql语句时，加””并转义；
 * TC_Mysql:: DB_STR means to add "" and escape when assembling SQL statements;
 */
-class TC_Mysql 
+class UTIL_DLL_API TC_Mysql 
 {
 public:
     /**
@@ -209,7 +208,7 @@ public:
     * @param iFlag        客户端标识
     * @param iFlag        Client Identity
     */
-    TC_Mysql(const string& sHost, const string& sUser = "", const string& sPasswd = "", const string& sDatabase = "", const string &sCharSet = "", int port = 0, int iFlag = 0);
+    TC_Mysql(const string& sHost, const string& sUser = "", const string& sPasswd = "", const string& sDatabase = "", const string &sCharSet = "", int port = 0, int iFlag = 0, int connectTimeout = 10, int writeReadTimeout = 0);
 
     /**
     * @brief 构造函数. 
@@ -245,7 +244,7 @@ public:
     * @return 无
     * @return none
     */
-    void init(const string& sHost, const string& sUser  = "", const string& sPasswd  = "", const string& sDatabase = "", const string &sCharSet = "", int port = 0, int iFlag = 0);
+    void init(const string& sHost, const string& sUser  = "", const string& sPasswd  = "", const string& sDatabase = "", const string &sCharSet = "", int port = 0, int iFlag = 0, int connectTimeout = 10, int writeReadTimeout = 0);
 
     /**
     * @brief 初始化. 
@@ -328,7 +327,7 @@ public:
      *  @brief mysql的一条记录
      *  @brief A record of MySQL
      */
-    class MysqlRecord
+    class UTIL_DLL_API MysqlRecord
     {
     public:
         /**
@@ -356,7 +355,7 @@ public:
      * @brief 查询出来的mysql数据
      * @brief MySQL data queried
      */
-    class MysqlData
+    class UTIL_DLL_API MysqlData
     {
     public:
         /**
@@ -806,4 +805,3 @@ private:
 };
 
 }
-#endif //_TC_MYSQL_H

@@ -13,10 +13,10 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-#ifndef __TC_MD5_H
-#define __TC_MD5_H
+#pragma once
 
 #include <string>
+#include "util/tc_platform.h"
 #include "util/tc_ex.h"
 #include "util/tc_common.h"
 
@@ -70,7 +70,7 @@ struct TC_MD5_Exception : public TC_Exception
     ~TC_MD5_Exception() throw(){};
 };
 
-class TC_MD5
+class UTIL_DLL_API TC_MD5
 {
     typedef unsigned char *POINTER;
     typedef unsigned short int UINT2;
@@ -239,4 +239,3 @@ protected:
 };
 
 }
-#endif

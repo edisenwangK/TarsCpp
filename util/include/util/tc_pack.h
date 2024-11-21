@@ -13,9 +13,7 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_PACK_H_
-#define __TC_PACK_H_
+#pragma once
 
 #include "util/tc_platform.h"
 #include <vector>
@@ -63,7 +61,7 @@ struct TC_PackOut_Exception : public TC_Exception
 /**
 * @brief  组包类, 用户组成一个二进制包
 */
-class TC_PackIn
+class UTIL_DLL_API TC_PackIn
 {
 public:
 
@@ -819,5 +817,3 @@ inline void decode(TC_PackOut &po, map<K, V> &t)
 
 }
 
-
-#endif

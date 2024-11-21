@@ -13,14 +13,12 @@
  * CONDITIONS OF ANY KIND, either express or implied. See the License for the 
  * specific language governing permissions and limitations under the License.
  */
-
-#ifndef __TC_THREAD_H_
-#define __TC_THREAD_H_
+#pragma once
 
 #include <sys/types.h>
 #include <signal.h>
-// #include <pthread.h>
 #include <thread>
+#include "util/tc_platform.h"
 #include "util/tc_ex.h"
 #include "util/tc_monitor.h"
 
@@ -54,7 +52,7 @@ class TC_CoroutineScheduler;
 /**
  * @brief  线程控制类
  */
-class TC_ThreadControl
+class UTIL_DLL_API TC_ThreadControl
 {
 public:
 
@@ -114,7 +112,7 @@ public:
  *  
  * 可以通过TC_ThreadControl管理线程。
  */
-class TC_Thread : public TC_Runable
+class UTIL_DLL_API TC_Thread : public TC_Runable
 {
 public:
 
@@ -258,5 +256,4 @@ protected:
 };
 
 }
-#endif
 

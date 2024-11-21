@@ -1,9 +1,8 @@
-﻿#ifndef __TC_PORT_H
-#define __TC_PORT_H
+﻿#pragma once
 
 #include "util/tc_platform.h"
 #include "util/tc_ex.h"
-
+#include "util/tc_singleton.h"
 #if TARGET_PLATFORM_LINUX || TARGET_PLATFORM_IOS
 
 #include <unistd.h>
@@ -49,7 +48,7 @@ struct TC_Port_Exception : public TC_Exception
 /**
  * 跨平台相关函数封装
  */
-class TC_Port
+class UTIL_DLL_API TC_Port
 {
 public:
 
@@ -136,7 +135,15 @@ public:
 #endif
 
     /**
-     * 查看文件属性
+     * 查看文件属性(如果不是link, 则看到的是文件本身的属性)
+     * @param path
+     * @param buf
+     * @return
+     */
+    static int stat(const char * path, stat_t * buf);
+
+    /**
+     * 查看文件属性(如果是link, 这看到指向的文件)
      * @param path
      * @param buf
      * @return
@@ -207,12 +214,6 @@ public:
      */
     static string getCwd();
 
-    /**
-     * kill某个pid的进程
-     * @param pid
-     */
-    static void kill(int64_t pid);
-
 	/**
 	 * 运行一个脚本
 	 * @param cmd
@@ -245,6 +246,20 @@ public:
      */
     static void closeAllFileDescriptors();
 #endif
+
+    /**
+     * kill某个pid的进程
+     * @param pid
+     * @return int, 0: 成功, -1: pid不存在
+     */
+    static int kill(int64_t pid);
+
+    /**
+     * pid是否存在
+     * @param pid
+     * @return int, 0: pid存在, -1: pid不存在
+     */
+    static int alive(int64_t pid);
 
     /**
      * 返回完整命令行参数, 如果pid不存在, 则返回为空
@@ -355,7 +370,7 @@ protected:
 	static BOOL WINAPI HandlerRoutine(DWORD dwCtrlType);
 #endif
 
-	struct SigInfo
+	struct SigInfo : public TC_Singleton<SigInfo, CreateUsingNew, NoDestroyLifetime>
 	{
 		std::mutex   _mutex;
 
@@ -364,9 +379,8 @@ protected:
 		std::atomic<size_t> _callbackId{0};
 	};
 
-	static shared_ptr<SigInfo>	_sigInfo;
+//	static SigInfo *_sigInfo;
 };
 
 }
 
-#endif
